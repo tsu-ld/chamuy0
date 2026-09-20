@@ -1,5 +1,5 @@
 {
-  "note": "Real posts from the public internet plus Tsu's feed (Sept 2026). label = expected classification. Normalized: broken emojis from copy-paste and UI chrome were removed. source = where the text was quoted.",
+  "note": "Real posts from the public internet plus Tsu's feed (Sept 2026), plus authored fixtures. label = expected classification. Normalized: broken emojis from copy-paste and UI chrome were removed. source = where the text was quoted; \"authored\" marks fixtures written for rubric coverage.",
   "posts": [
     {
       "id": "bonsai-27b",
@@ -189,6 +189,300 @@
       "label": "clean",
       "source": "https://community.hachyderm.io/blog/2022/12/03/leaving-the-basement/",
       "text": "Hachyderm obtained roughly 30,000 users in 30 days; or roughly 1 new user every 1.5 minutes for the duration of the month of November. Our busiest traffic day was 11/21/22 where we processed 999.80 GiB in RX/TX traffic in a single day. During the month of November we averaged 36.86 Mbps in traffic with samples taken every hour. On November 27th, I filed the 1st of what would become 21 changelogs for our production infrastructure. The initial report was failing images in production. The initial investigation lead our team to discover that our NFS clients were behaving unreasonably slow. However we did determine that we had scaled our compute nodes very high in the process of investigating NFS. Load averages on Yakko, Wakko, and Dot were well above 1,000 at this time."
+    },
+    {
+      "id": "dm-gate-cold-email",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "I spent 6 months writing 200 cold emails.\n\nOnly 4 got replies.\n\nThen I changed ONE thing.\n\nNow I book 15 calls a week with the same effort.\n\nI put the exact 9-word opening line, the 3-email sequence and the follow-up schedule into a free playbook.\n\nWant it?\n\nComment \"SEND\" and I'll DM it to you.\n\n(Only if you actually send emails. No lurkers.)"
+    },
+    {
+      "id": "tag-a-friend-rejection",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "A recruiter rejected my friend for not having a degree.\n\nTwo years later he was the one interviewing candidates at the same company.\n\nNot because he got lucky.\n\nBecause he kept applying anyway.\n\nTag someone who needs to hear this today.\n\nAnd if you're the one still applying: keep going. Your yes is coming."
+    },
+    {
+      "id": "link-first-comment-dashboard",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "It's finally out.\n\nThe dashboard I use to track every dollar of my studio's cash flow, all on one screen.\n\nNo more Friday panic.\n\nNo more guessing.\n\nI recorded a 14-minute walkthrough showing exactly how it is built.\n\nLink in the first comment (LinkedIn hates links, you know how it is).\n\nGo grab it before I take the recording down."
+    },
+    {
+      "id": "emoji-poll-coffee",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "Quick one.\n\nWhich one are you?\n\n☕ Coffee first, then email\n🚀 Inbox first, then coffee\n🧘 No coffee, no email\n\nDrop your emoji below.\n\nI'll go first: ☕ (obviously)\n\nCurious to see what wins. No wrong answers."
+    },
+    {
+      "id": "broetry-insistir",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "Mi jefe me dijo que no.\n\nLe insistí.\n\nMe dijo que no otra vez.\n\nLe insistí de nuevo.\n\nY al final dijo que sí.\n\nEse día entendí todo.\n\nLa persistencia no se negocia.\n\n¿Estás de acuerdo?\n\nSi te sirvió, compartilo."
+    },
+    {
+      "id": "keynote-complaint-brag",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "Exhausted.\n\nThree flights this week. Two keynotes. A board meeting in between.\n\nMy calendar is a crime scene.\n\nBut standing on that stage in front of 800 people, watching the room lean in during the Q&A...\n\nThat's why I still say yes.\n\nGrateful for the chaos.\n\nHumbled every single time.\n\nThe team shipped the whole conference without me touching a slide. What a group."
+    },
+    {
+      "id": "madrugada-900-dias",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "4:30 AM.\n\nSuena la alarma.\n\nAgua fría. 40 minutos de gimnasio.\n\n5:30. Lectura. 20 páginas.\n\n6:15. Journaling y plan del día.\n\n7:00. Primera reunión.\n\nAsí llevo 900 días seguidos.\n\nLa disciplina no es un rasgo. Es una decisión diaria.\n\nNo necesitás talento. Necesitás repetir.\n\nEl que madruga, construye.\n\n¿Vos a qué hora arrancás?"
+    },
+    {
+      "id": "humbled-seed-round",
+      "lang": "en",
+      "label": "borderline",
+      "source": "authored",
+      "text": "Humbled to announce that Tero Analytics closed a €2.4M seed round led by Kestrel Ventures.\n\nTwo years ago we were three people in a borrowed office arguing about whether small logistics companies would ever pay for analytics.\n\nToday: 340 customers, 11 people, and a product that saves dispatchers around 6 hours a week.\n\nThe round is not the milestone. The customers are. Thank you to everyone who answered a cold email in 2024.\n\nWe're also hiring two backend engineers in Buenos Aires. The roles are on our site."
+    },
+    {
+      "id": "janitor-veintidos-anos",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "El nuevo CEO entró a la planta a las 6 AM.\n\nSe cruzó con el hombre que lustraba el piso.\n\n—¿Cuánto hace que estás acá? —preguntó.\n\n—Veintidós años, señor.\n\nEl CEO se quedó callado.\n\nAl día siguiente, en la reunión con los directores, dijo una sola frase:\n\n—Si no sabés el nombre de quien limpia tu oficina, no sabés nada de tu empresa.\n\nEsa noche el hombre del trapeador recibió un aumento.\n\nMoraleja: el liderazgo de verdad se mide en cómo tratás a quien no te puede dar nada.\n\n¿Conocés un líder así? Etiquetalo."
+    },
+    {
+      "id": "rejected-147-times",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "I got rejected 147 times in one year.\n\n147.\n\nSame pitch. Same product. Different people saying no.\n\nThe 148th said yes.\n\nThat one yes paid for the next three years of the company.\n\nPeople ask me for my sales script. It is not the script. It is the volume.\n\nRejection is just data with bad manners.\n\nIf you are at 12 rejections and thinking of quitting: send the 13th.\n\nFollow me for more if you work in sales."
+    },
+    {
+      "id": "after-14-years-lessons",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "After 14 years building products, here's what I've learned:\n\nPeople don't buy features. They buy the after state.\n\nStrategy is easy. Saying no is the job.\n\nYour first 10 hires decide what the next 100 can do.\n\nRevenue fixes almost everything. Almost.\n\nSlow down to speed up.\n\nHire for slope, not intercept.\n\nThe best meeting is the one you cancel.\n\nI wish I'd learned all this at 25.\n\nWhich one hit you hardest? Save this for the next time you're stuck."
+    },
+    {
+      "id": "wrong-about-remote",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "I was wrong about remote work.\n\nFor five years I said the office was non-negotiable. Culture needs a room. Speed needs proximity. I wrote posts about it. I argued in comments.\n\nThen we went distributed for a quarter because of a lease problem.\n\nOur shipping rate went up 40%.\n\nI was wrong, and it cost me nothing to admit it because the market humbles everyone eventually.\n\nHere's what I believe now: in-person time is a tool, not a religion.\n\nWhat changed your mind about how teams work?"
+    },
+    {
+      "id": "fondo-siete-lecciones",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "Hace tres años toqué fondo.\n\nDeudas. Un proyecto que se cayó. Insomnio. Y una vergüenza que no le conté a nadie.\n\nMe levantaba a las 5 a reescribir propuestas que nadie contestaba.\n\nAsí estuve ocho meses.\n\nUn día un cliente me dijo: \"tu problema no es el mercado, es que te da miedo cobrar\".\n\nY algo se rompió adentro.\n\nAprendí 7 cosas en ese proceso:\n\n1. El precio bajo atrae al peor cliente.\n2. Vendés el problema, no el servicio.\n3. Tu agenda es tu estrategia.\n4. Decile que no rápido.\n5. La propuesta de una página gana a la de veinte.\n6. Seguí el resultado, no la táctica.\n7. Rodéate de gente que cobra más que vos.\n\nHoy facturo 5x.\n\nSi estás en el fondo: no estás solo.\n\nComentá \"LIBRE\" y te mando la guía que me hubiese querido leer entonces."
+    },
+    {
+      "id": "no-es-plata",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "No es un problema de plata.\n\nEs un problema de liderazgo.\n\nNo es que tu equipo rinda poco.\n\nEs que no saben para qué trabajan.\n\nNo es que el mercado esté difícil.\n\nEs que tu propuesta suena igual a la de todos.\n\nNo es que falte tiempo.\n\nEs que sobran reuniones.\n\nEl liderazgo no se trata de tener todas las respuestas.\n\nSe trata de hacer mejores preguntas.\n\nGuarda esto para tu próximo lunes."
+    },
+    {
+      "id": "delve-tapestry-whitepaper",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "In today's fast-paced digital landscape, it's crucial for organizations to delve into the intricate tapestry of customer experience to unlock pivotal insights that foster sustainable growth.\n\nLeveraging a robust, future-proof framework allows teams to navigate complexity, embrace ambiguity, and champion a culture of relentless iteration.\n\nIn this arena, data serves as a testament to the power of alignment.\n\nIt is a rich tapestry indeed.\n\nBut what does this mean for your roadmap?\n\nTruly resilient companies don't just optimize processes; they orchestrate ecosystems of value.\n\nThe result? A seamless journey where every touchpoint is a testament to excellence.\n\nI'm thrilled to announce that our new whitepaper delves into exactly this.\n\nDrop a 🔥 if you want it in your inbox."
+    },
+    {
+      "id": "emoji-productivity-hacks",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "5 productivity hacks that changed my life 🚀\n\n🧠 Wake up at 5 AM and protect the first hour for deep work\n📵 Phone on airplane mode until the inbox is empty\n⏱️ Time-block everything, even coffee with yourself\n📝 Write tomorrow's list before closing the laptop tonight\n🙅 Say no to meetings that have no decision attached\n\nSounds simple? It is. The hard part is consistency.\n\nDo all five for 30 days and you won't recognize your calendar.\n\n♻️ Repost to help someone in your network\n🔖 Save this for Monday morning\n\nWhich one are you trying first? 👇"
+    },
+    {
+      "id": "escalar-negocio-hashtags",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "**Cómo Escalar Un Negocio Digital En 2026**\n\nLa verdad incómoda:\n**El Modelo Correcto lo Cambia Todo.**\n\n**1. Nicho Primero, Siempre**\nSin foco no hay autoridad.\n\n**2. Oferta Que Se Explique Sola**\nSi necesita 30 minutos, está rota.\n\n**3. Sistemas, No Esfuerzo Heroico**\nEl equipo replica lo que el documento dice.\n\n**4. Distribución Antes De Perfección**\nEl mejor producto invisible no factura.\n\n**5. Métrica Única De Verdad**\nSi tenés 12 KPIs, no tenés ninguno.\n\nComentá CUÁL querés que desarrolle primero.\n\n#MarketingDigital #Emprendimiento #Escalado #Mindset #Liderazgo #Ventas #Startup #Crecimiento"
+    },
+    {
+      "id": "pgvector-p95-latency",
+      "lang": "en",
+      "label": "clean",
+      "source": "authored",
+      "text": "We cut p95 latency on our document search from 410ms to 38ms. Notes, because most of the cost was boring.\n\nSetup: ~9M chunks in Postgres with pgvector, HNSW index, 1536-dim embeddings. Two things dominated the profile:\n\n1. The HNSW index was built with the default m=16, ef_construction=64 and we never touched ef_search. Raising ef_search to 120 recovered recall but pushed p95 up. The real win was lowering m to 8 and rebuilding: less graph to traverse, recall held at 0.94@10 on our eval set.\n2. We filtered by tenant before the vector search in a way that made the planner do a full index scan per tenant. Moving the tenant filter into the HNSW pre-filter cut the worst case by 6x.\n\np95 is 38ms now at 120 QPS on a 4 vCPU instance. Recall dropped from 0.96 to 0.94. For our use case that trade is obviously right.\n\nThe boring part: half the improvement came from a query planner hint, not from vector tuning.\n\nI can share the exact index parameters but they won't transfer to your data. Measure first, then tune."
+    },
+    {
+      "id": "tren-cordoba-empanada",
+      "lang": "en",
+      "label": "clean",
+      "source": "authored",
+      "text": "Missed my train in Córdoba last Thursday because I bought the wrong kind of empanada and the kiosk lady took my change at exactly the wrong moment. By the time I ran to platform 4 the doors were closing.\n\nSat on a bench for two hours with a bruised ego and a cold empanada.\n\nEnded up sharing the bench with a guy carrying a guitar he clearly didn't want to talk about. We watched a dog try to steal a churro from a kid. The dog won.\n\nCaught the next train. Nothing about the trip was productive.\n\nProbably the best afternoon I've had in months. I still don't know what to make of it and I'm not going to try."
+    },
+    {
+      "id": "planilla-caja-dm",
+      "lang": "es",
+      "label": "borderline",
+      "source": "authored",
+      "text": "Armé una planilla para controlar el flujo de caja de una pyme.\n\nUna hoja. Sin macros. Funciona con datos que ya tenés en el banco.\n\nLa usé con 30 clientes en dos años y siempre encontró plata escondida: suscripciones olvidadas, precios viejos, impuestos mal cargados. En promedio, 4% del gasto mensual.\n\nNo la vendo. La comparto tal cual, con un video de 10 minutos que explica cómo cargarla.\n\nComentá \"CAJA\" y te la mando por privado.\n\nSi no me seguís no pasa nada, te la mando igual."
+    },
+    {
+      "id": "vertiginoso-mundo-actual",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "En el vertiginoso mundo actual, todo cambia a una velocidad que nadie puede ignorar y cada día trae una nueva disrupción.\n\nLas empresas que quieren sobrevivir deben abrazar la transformación integral, activar sinergias profundas y construir una cultura viva que impulse el cambio desde adentro.\n\nPorque el liderazgo moderno no se trata de gestionar recursos, sino de inspirar movimientos, de co-crear futuro y de convertir cada desafío en una oportunidad dorada.\n\nQuien entienda este momento histórico avanzará. Quien se resista, desaparecerá en silencio.\n\n¿Estás de acuerdo? 👇"
+    },
+    {
+      "id": "informe-costes-q3",
+      "lang": "en",
+      "label": "clean",
+      "source": "authored",
+      "text": "Our Q3 cloud spend landed at $18,430, up 22% from Q2, so I spent a weekend tracing it with Tallyframe, the cost-tagging tool we run on every cluster.\n\nIt took about three hours. One finding explained 61% of the increase: a staging environment on Boreal Cloud with 14 nodes that nobody had used since 22 July. It just kept running.\n\nWe shut it down on 14 October and moved two nightly reconciliation jobs to a single shared node. November is now tracking toward $14,900.\n\nI walked through the full breakdown at our backend guild on 28 October. Slides and queries are in the team drive."
+    },
+    {
+      "id": "desbloquea-tu-potencial",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "El mercado no espera a nadie y la diferencia entre avanzar o desaparecer está en tu mentalidad.\n\nDesbloquea tu potencial. Sumérgete en el paisaje de la innovación.\n\nAbraza la disrupción integral, activa tu visión exponencial y co-crea el futuro con pasión, propósito y resiliencia total.\n\nCada amanecer es una nueva oportunidad para reinventarte, para elevar tu energía y para liderar la transformación que el mundo necesita.\n\nLos que entienden este llamado interior ya están construyendo el mañana. Los demás solo miran pasar la historia.\n\n¿Te sumas al cambio? 👇\n\n#Mentalidad #Innovación #Crecimiento"
+    },
+    {
+      "id": "migration-checklist-steps",
+      "lang": "en",
+      "label": "clean",
+      "source": "authored",
+      "text": "How we moved 34 cron jobs off our old scheduler onto Rundesk 4.2 last month without missing a run:\n\n1. Listed every job with `rundesk list --all` and flagged the 6 with hardcoded paths.\n2. Mirrored them in shadow mode for 7 days; compared logs daily with `rundesk diff --day`.\n3. Cut over in three batches (12, 12, 10), one per morning, watching the dashboard for 2 hours after each.\n4. Kept the old scheduler read-only for 14 days, then deleted the jobs after zero misses.\n\nTotal: 34 jobs, 2 retries on stale credentials, 0 missed runs. The shadow week is the whole trick."
+    },
+    {
+      "id": "nadie-quiere-trabajar",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "Nadie quiere trabajar hoy en día. Cambia mi opinión.\n\nAntes la gente se quedaba hasta tarde sin quejarse y defendía la camiseta con orgullo. Ahora todo el mundo pone límites, pide flexibilidad y habla de salud mental por cualquier cosa.\n\nSi les ofreces una oportunidad de oro, te preguntan por el horario. Si les pides compromiso, te hablan de equilibrio. Todo es excusa y nadie quiere sacrificarse por nada.\n\nLos de antes construían empresas con sudor. Los de ahora quieren todo servido desde el primer día.\n\nDuro pero real. Si te ofende, quizás seas parte del problema. 🔥"
+    },
+    {
+      "id": "turnover-study-2025",
+      "lang": "en",
+      "label": "borderline",
+      "source": "authored",
+      "text": "I used to repeat the line that nobody wants responsibility anymore. Then I read the 2025 Harbor Work Study by the Meridian Labor Institute, which surveyed 4,120 shift workers across retail and care.\n\nThe headline number: 63% said they would take extra shifts if schedules were posted 3 weeks ahead. Only 11% named pay as the top reason for quitting; unpredictable hours beat it 3 to 1.\n\nSo the contrarian take I now hold: the problem is not work ethic, it is scheduling chaos. Fix the rota before lecturing people about commitment.\n\nStrong opinions are cheap. Rotas are data."
+    },
+    {
+      "id": "avaricia-cupulas",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "Otra vez lo mismo y nadie dice nada. Suben los precios, recortan por abajo y siempre pagan los mismos de siempre.\n\nTodo por la avaricia de las cúpulas, que solo piensan en sus bonus, en sus sillones y en sus fotos de portada.\n\nNos piden esfuerzo, nos piden paciencia, nos piden sacrificio mientras ellos brindan arriba sin mirar abajo.\n\nEs una vergüenza profunda, una herida moral que duele cada día más y que rompe la confianza de la gente buena.\n\nHasta cuándo vamos a aguantar este atropello descarado. Alguien tiene que decirlo bien fuerte. 😡🔥"
+    },
+    {
+      "id": "procurement-audit-figures",
+      "lang": "en",
+      "label": "borderline",
+      "source": "authored",
+      "text": "The council voted 6-2 last March to renew the school meals contract with Greenfield Caterers without a second bid, adding £1.9M over three years.\n\nAuditor Dana Whitfield found the rival bid from Parkside Foods was £340,000 cheaper and scored higher on delivery times. Her report, published 9 September by the Milltown Audit Office, lists 14 late deliveries and 3 failed inspections under the current deal.\n\nThis is not about left or right. It is about a procurement rulebook that got ignored. Rescind it, rebid it, publish the scores.\n\nParents deserve numbers, not excuses."
+    },
+    {
+      "id": "too-expensive-every-week",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "\"You're too expensive.\" I hear this every week.\n\nAt first it stung. Then I learned the truth: price is never about price. It is about perceived value and quiet confidence.\n\nCheap clients cost you twice. They negotiate hard, pay late, and drain your energy. Premium clients respect the work and stay for years.\n\nSo I raised my rates, tightened my offer, and started saying no with a smile.\n\nIf you are undercharging right now, this is your sign. I help freelancers fix their pricing in 30 days. DM me \"PRICE\" and let's talk. 🚀"
+    },
+    {
+      "id": "client-kickoff-outcome",
+      "lang": "en",
+      "label": "borderline",
+      "source": "authored",
+      "text": "On 12 August, Mara Ellingsen from the Harbor & Finch studio told me on a kickoff call: \"We don't need more content, we need one page that actually books calls.\"\n\nShe was right. We cut her 9-page site down to a single booking page with three proof blocks and her direct calendar link.\n\nBy 30 August she wrote back: 11 qualified calls booked, 4 converted into a €2,300 package each. Same traffic, clearer path.\n\nI still run content retainers, but that call changed how I scope them. One page first, then the rest."
+    },
+    {
+      "id": "despido-4-marzo",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "El 4 de marzo de 2023 me despidieron. Hoy firmé mi mayor contrato.\n\nEse día guardé mis cosas en una caja, bajé en el ascensor sin mirar a nadie y lloré en el auto antes de manejar a casa.\n\nPasé meses tocando puertas, regalando diagnósticos y aprendiendo a cobrar sin pedir perdón.\n\nHoy una empresa mediana me firmó un contrato anual que triplica mi mejor sueldo de aquella época.\n\nNo fue suerte. Fue constancia, humildad y no rendirse cuando nadie aplaude.\n\nSi hoy te despiden, quizás sea el inicio de tu mejor etapa. 💪"
+    },
+    {
+      "id": "new-role-announcement",
+      "lang": "en",
+      "label": "clean",
+      "source": "authored",
+      "text": "Some news: I joined Fieldnote Systems as a senior backend engineer starting 3 November.\n\nFieldnote builds offline-first inspection software for bridge maintenance crews. My team of six owns sync and conflict resolution across 2,000 field devices.\n\nFirst project: cutting sync retries on spotty connections. Grateful to Dana Okafor and the team for a thoughtful interview process. Happy to be here."
+    },
+    {
+      "id": "ritmo-plano-ademas",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "El trabajo diario pide foco total para lograr metas claras en cada equipo hoy. Además, el orden diario ayuda a cerrar tareas clave sin perder tiempo nunca hoy. Asimismo, hablar claro evita errores comunes que frenan avances de todo grupo cada día. Además, pensar antes de actuar ahorra horas y cuida el ánimo de todos siempre. Asimismo, oír al otro crea lazos sanos que suman fuerza al plan común siempre. Además, pedir ayuda a tiempo evita fallos que luego cuestan caros a todos siempre. Asimismo, dar las gracias eleva el ánimo y une más a cada equipo humano. Además, cerrar bien el día deja la mente libre para volver con ganas mañana. Asimismo, anotar cada idea guarda valor que luego sirve en cada reto nuevo cada día. Además, cuidar los detalles suma puntos que el cliente nota sin decir nada nunca. Asimismo, llegar a tiempo muestra respeto que abre puertas en todo trato justo cada día. Además, cerrar cada semana con orden deja todo listo para empezar bien el lunes próximo."
+    },
+    {
+      "id": "incident-retro-mixed",
+      "lang": "en",
+      "label": "clean",
+      "source": "authored",
+      "text": "Last Tuesday our checkout webhook started double-charging trial upgrades. Short version: we deserved it.\n\nA retry flag we added in September re-fired every event after 40 seconds because the handler never acknowledged the queue. By the time someone noticed, 212 customers had duplicate €9 holds.\n\nWe reversed all of them the same afternoon, then capped retries at 3 in Driftlane, our queue inspector, and added a dedupe key on the account ID.\n\nTotal damage: 212 duplicate holds, zero completed charges, one long apology email. The fix took 40 minutes. Finding it took 6 hours.\n\nLesson filed, test added, moving on."
+    },
+    {
+      "id": "rockstar-salario-competitivo",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "🔥 BUSCAMOS rockstar 🔥\n\n¿Querés ser parte de nuestra familia? Somos una startup que la rompe y buscamos un crack total para sumarse ya.\n\nOfrecemos salario competitivo, ambiente joven, after offices y la oportunidad de crecer sin techo con nosotros.\n\nBuscamos alguien con ganas, buena onda y pasión por los desafíos. Todo con incorporación urgente.\n\nSi te sentís identificado, mandame tu CV por privado y arrancás la semana que viene. 🚀"
+    },
+    {
+      "id": "backend-role-range",
+      "lang": "en",
+      "label": "clean",
+      "source": "authored",
+      "text": "We're hiring a backend engineer at Careloop Systems in Lisbon, hybrid 2 days a week.\n\nStack: async Python services, relational databases, event queues. You need 3+ years shipping production APIs, comfort with on-call one week in six (compensated), and written English for design docs.\n\nSalary: €58,000-€72,000 plus 10% bonus. Process: 30-minute intro, 90-minute practical, final with the team. No take-home.\n\nApply by 12 December at jobs.careloop.example with your CV and one paragraph on your hardest queue bug. We reply within 5 working days."
+    },
+    {
+      "id": "three-spots-left-today",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "My 1:1 coaching sprint opens again next week. Only 3 spots left, closing today.\n\nDoors shut at midnight. No replay. No second round.\n\nLast time 40 people missed out and begged me to reopen. I said no.\n\nThis is 6 weeks of direct access, scripts, and reviews that normally take a year alone.\n\nComment \"IN\" now before the timer hits zero. Once they're gone, they're gone. 🔥🔥🔥"
+    },
+    {
+      "id": "workshop-deadline-details",
+      "lang": "en",
+      "label": "clean",
+      "source": "authored",
+      "text": "Registration for my hands-on invoicing workshop for freelancers closes 30 November at 18:00 CET.\n\nIt runs 6 December, 10:00-13:00 CET on video, max 40 people. Price: €79 including templates and the recording.\n\nWe will set up quotes, recurring invoices and late-fee reminders in Ledgerline, the billing tool I use with clients. You leave with yours configured.\n\nSign up at workshops.harborfinch.example/invoicing. Refunds until 3 December. 27 seats already taken."
+    },
+    {
+      "id": "tag-eight-executives",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "Honored to be in such incredible company at yesterday's leadership dinner. 🙏\n\nThank you @DanaWhitfield @MarcusBell @PriyaNandan @TomasReyes @LenaKovacs @JonasLindqvist @AmaraDiallo @SofiaMarchetti for an unforgettable evening of wisdom and inspiration.\n\nGrateful to learn from the best. What a room. What energy. Truly blessed to connect with you all. ✨\n\n#Leadership #Grateful #Networking"
+    },
+    {
+      "id": "two-tags-partners",
+      "lang": "en",
+      "label": "clean",
+      "source": "authored",
+      "text": "Shout-out to two people who made last week's warehouse pilot work.\n\n@MaraEllingsen from Harbor & Finch reworked the intake checklist with our crew over two days, catching the label mismatch that blocked 60 kits.\n\n@JonasLindqvist from Driftlane lent us three spare scanners and stayed late Thursday to test the sync fix.\n\nThe pilot cleared 412 kits with zero mispicks because of them. Thank you both."
+    },
+    {
+      "id": "scale-mindset-growth",
+      "lang": "es",
+      "label": "slop",
+      "source": "authored",
+      "text": "Si querés escalar tu negocio, todo empieza con el mindset correcto.\n\nEl growth no es una táctica, es una obsesión diaria por mejorar cada métrica y cada funnel.\n\nLos que hacen scale de verdad piensan en grande, ejecutan rápido y nunca se conforman con resultados mediocres.\n\nActivá tu growth mindset, rodeate de players que ya estén escalando y convertí tu startup en una máquina.\n\nEl mercado premia a los que se animan. ¿Vos estás listo para escalar? 🚀🔥\n\n#Scale #Mindset #Growth"
+    },
+    {
+      "id": "not-only-but-also",
+      "lang": "en",
+      "label": "slop",
+      "source": "authored",
+      "text": "Not only did I learn to write better proposals, but also to follow up without feeling awkward.\n\nFreelancing rewards three things: clarity, consistency, and courage.\n\nClarity gets you replies. Consistency gets you referrals. Courage gets you raises.\n\nI used to overthink every line. Now I send, track, and improve.\n\nSmall habits, big pipeline. That is the whole game. Share this if it found you at the right time."
     }
   ]
 }
