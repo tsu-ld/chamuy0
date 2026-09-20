@@ -4,7 +4,7 @@ import { buildQuestions, SCORE_QUESTION_KEY, toVerdict } from './rubric'
 
 const SLOP_RAW_SCORE = 7.3
 const SLOP_DISPLAY_SCORE = 8.1
-const EXPECTED_SIGNAL_COUNT = 6
+const EXPECTED_SIGNAL_COUNT = 8
 const SCORE_LEVEL_COUNT = 10
 const BORDERLINE_RAW_SCORE = 3.6
 const NEAR_BOUNDARY_RAW_SCORE = 4.6
@@ -19,6 +19,8 @@ const SLOP_ANSWERS: JevAnswers = {
   buzzwords: { type: 'noul', noul: 0.6 },
   broetry: { type: 'noul', noul: 0.55 },
   fake_story: { type: 'noul', noul: 0.51 },
+  template_hook: { type: 'noul', noul: 0.52 },
+  rage_bait: { type: 'noul', noul: 0.53 },
 }
 
 function answersWithScore(score: number): JevAnswers {
@@ -31,6 +33,8 @@ function answersWithScore(score: number): JevAnswers {
     buzzwords: { type: 'noul', noul: 0.05 },
     broetry: { type: 'noul', noul: 0.05 },
     fake_story: { type: 'noul', noul: 0.05 },
+    template_hook: { type: 'noul', noul: 0.05 },
+    rage_bait: { type: 'noul', noul: 0.05 },
   }
 }
 

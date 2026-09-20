@@ -9,7 +9,7 @@ A small Firefox and Chrome extension that scores every post in your LinkedIn fee
 ## What you get
 
 - A chip on every post: `✓ 1.6 clean`, `≈ 3.4 borderline`, or `☣ 8.4 slop`.
-- A breakdown with the six signals behind the score: engagement bait, humblebrag, AI generic, corporate buzzwords, broetry, fabricated story.
+- A breakdown with the eight signals behind the score: engagement bait, rage bait, humblebrag, AI generic, corporate buzzwords, broetry, fabricated story, manufactured hook.
 - A Train row in the popover. Label a post clean, borderline or slop, and the next classifications use your latest labels as reference.
 
 ## Install on Firefox (about two minutes)
@@ -47,7 +47,7 @@ Cost is about $0.042 per million input tokens. A full day of scrolling costs a f
 ![Chip states](docs/chips.png)
 
 - `...` means the post is being scored. Posts shorter than 40 characters are skipped.
-- Click the chip for the popover: the score out of 10, the verdict, and the six signals sorted by confidence.
+- Click the chip for the popover: the score out of 10, the verdict, and the eight signals sorted by confidence.
 - **Train** is how it learns. Label a couple of posts, then open the settings page to see your examples. The classifier uses your latest two per label on every later request.
 
 Score bands: below 2.5 is clean, 2.5 to 5 is borderline, 5 and up is slop.
@@ -79,6 +79,6 @@ bun run eval    # scores fixtures/posts.json against the live API (needs .env)
 - `dev/fixture-feed.html` mimics the current LinkedIn feed DOM, including the hashed-class 2026 version, to test the selectors without logging in.
 - `scripts/check`, `scripts/build`, `scripts/package` and `scripts/release <patch|minor|major>` follow the release flow used in my other repos.
 
-The rubric lives in `core/rubric.ts`: one score question with ten levels, six yes/no signal questions, and two thresholds. Everything else is wiring. If you want to change what counts as slop, that is the file to edit.
+The rubric lives in `core/rubric.ts`: one score question with ten levels, eight yes/no signal questions, and two thresholds. Everything else is wiring. If you want to change what counts as slop, that is the file to edit.
 
 This README scored 0.5/10 on the classifier it describes, which feels about right.
