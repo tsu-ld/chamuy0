@@ -150,6 +150,8 @@
 }
 
 .lnslop-close {
+  display: grid;
+  place-items: center;
   margin-block: -4px;
   margin-inline-end: -6px;
   margin-inline-start: auto;
