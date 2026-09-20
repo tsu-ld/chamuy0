@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+git rev-parse --show-toplevel >/dev/null
+
+bump="${1:-}"
+case "$bump" in
+	patch|minor|major) ;;
+	*) echo "Usage: ./scripts/release <patch|minor|major>" >&2; exit 1 ;;
+esac
+if [[ "$(git branch --show-current)" != "main" ]]; then
+	echo "Release from main only." >&2
+	exit 1
+fi
+if [[ -n "$(git status --porcelain)" ]]; then
+	echo "Working tree must be clean." >&2
+	exit 1
+fi
+
+./scripts/check
+current="$(sed -n 's/^  "version": "\([^"]*\)",$/\1/p' extension/manifest.json)"
+IFS=. read -r major minor patch <<<"$current"
+case "$bump" in
+	major) next="$((major + 1)).0.0" ;;
+	minor) next="${major}.$((minor + 1)).0" ;;
+	patch) next="${major}.${minor}.$((patch + 1))" ;;
+esac
+tag="v${next}"
+if git show-ref --verify --quiet "refs/tags/$tag"; then
+	echo "Local tag $tag already exists." >&2
+	exit 1
+fi
+remote="$(git ls-remote origin refs/heads/main "refs/tags/$tag")"
+if [[ "$remote" != "$(git rev-parse HEAD)"$'\t'refs/heads/main ]]; then
+	echo "Remote main must match HEAD and the release tag must not exist." >&2
+	exit 1
+fi
+
+backup="$(mktemp -d)"
+cp package.json extension/manifest.json "$backup/"
+committed=false
+cleanup() {
+	if [[ "$committed" == false ]]; then
+		cp "$backup/package.json" package.json
+		cp "$backup/manifest.json" extension/manifest.json
+		git reset -q -- package.json extension/manifest.json extension/dist
+	fi
+	rm -rf "$backup"
+}
+trap cleanup EXIT
+
+sed -i "s/^  \"version\": \"${current}\",$/  \"version\": \"${next}\",/" package.json extension/manifest.json
+./scripts/check
+./scripts/build
+./scripts/package
+
+git add package.json extension/manifest.json extension/dist
+git commit -m "release: ${tag}"
+committed=true
+git tag -a "$tag" -m "release: ${tag}"
+if ! git push --atomic origin HEAD:refs/heads/main "refs/tags/$tag:refs/tags/$tag"; then
+	echo "Publication failed. Local commit and tag are retained; inspect before retrying." >&2
+	exit 1
+fi
+gh release create "$tag" "dist/chamuy0-${next}.zip" \
+	--title "$tag" \
+	--notes "Firefox and Chrome extension, prebuilt. Download the zip, unzip it, and follow the README install steps."
+echo "Published ${tag} with dist/chamuy0-${next}.zip"

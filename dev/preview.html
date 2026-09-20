@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>lnslop — design preview</title>
+    <link rel="stylesheet" href="../extension/badge.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px 20px 64px;
+        background: #e9e6e1;
+        color: #1c1a17;
+        font: 400 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      .pv-head, .pv-sec { max-width: 980px; margin-inline: auto; }
+      .pv-head h1 { margin: 0; font-size: 18px; }
+      .pv-head p { margin: 4px 0 0; color: #6b655c; font-size: 13px; }
+      .pv-label {
+        margin: 36px 0 12px;
+        font: 700 11px/1 ui-monospace, "Cascadia Mono", Menlo, monospace;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #6b655c;
+      }
+      .pv-chipstrip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+      }
+      .pv-name { margin: 0 0 6px; font: 500 11px/1.3 ui-monospace, Menlo, monospace; color: #6b655c; }
+      .pv-anchor {
+        position: relative;
+        display: flex;
+        align-items: center;
+        block-size: 40px;
+        padding-inline: 8px;
+        border: 1px dashed rgba(0, 0, 0, .14);
+        border-radius: 4px;
+        background: #fff;
+      }
+      .pv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: 16px; }
+      .pv-stage { min-block-size: 420px; padding: 18px; border-radius: 8px; background: #f3f2ef; }
+      .pv-stage.lnslop-dark { background: #000; }
+      .pv-post {
+        position: relative;
+        max-inline-size: 520px;
+        padding: 12px 16px 10px;
+        border: 1px solid var(--lnslop-hairline);
+        border-radius: 8px;
+        background: var(--lnslop-surface);
+      }
+      .pv-posthead { display: flex; gap: 10px; align-items: center; }
+      .pv-avatar {
+        inline-size: 48px;
+        block-size: 48px;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--lnslop-ink) 14%, transparent);
+        flex: none;
+      }
+      .pv-id i, .pv-lines i {
+        display: block;
+        block-size: 8px;
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--lnslop-ink) 12%, transparent);
+      }
+      .pv-id i:first-child { block-size: 9px; background: color-mix(in srgb, var(--lnslop-ink) 22%, transparent); }
+      .pv-id i + i { margin-block-start: 6px; inline-size: 74px; }
+      .pv-lines { margin-block-start: 14px; }
+      .pv-lines i + i { margin-block-start: 8px; }
+      .pv-actions {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-block-start: 14px;
+        padding-block-start: 8px;
+        border-block-start: 1px solid var(--lnslop-hairline-soft);
+      }
+      .pv-actions i {
+        inline-size: 44px;
+        block-size: 8px;
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--lnslop-ink) 12%, transparent);
+      }
+      .pv-anchor,
+      .pv-post.lnslop-host {
+        --lnslop-ink: rgba(0, 0, 0, .9);
+        --lnslop-ink-soft: rgba(0, 0, 0, .6);
+        --lnslop-surface: #fff;
+        --lnslop-hairline: rgba(0, 0, 0, .15);
+        --lnslop-hairline-soft: rgba(0, 0, 0, .08);
+        --lnslop-hover: rgba(0, 0, 0, .08);
+        --lnslop-positive: #057642;
+        --lnslop-caution: #915907;
+        --lnslop-negative: #b24020;
+        --lnslop-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+      }
+      .lnslop-dark .lnslop-host,
+      .lnslop-dark .lnslop-popover {
+        --lnslop-ink: rgba(255, 255, 255, .92);
+        --lnslop-ink-soft: rgba(255, 255, 255, .62);
+        --lnslop-surface: #2a3138;
+        --lnslop-hairline: rgba(255, 255, 255, .16);
+        --lnslop-hairline-soft: rgba(255, 255, 255, .09);
+        --lnslop-hover: rgba(255, 255, 255, .12);
+        --lnslop-positive: #7cc9a2;
+        --lnslop-caution: #d9ab63;
+        --lnslop-negative: #e08a6e;
+        --lnslop-shadow: 0 4px 12px rgba(0, 0, 0, .45);
+      }
+      .pv-options-wrap { border-radius: 8px; overflow: hidden; }
+      .pv-options-wrap .lnslop-options { padding: 24px 16px; }
+    </style>
+  </head>
+  <body>
+    <header class="pv-head">
+      <h1>Slop chip — design preview</h1>
+      <p>Static render of extension/badge.css. Popovers are shown open; no JS.</p>
+    </header>
+
+    <section class="pv-sec">
+      <h2 class="pv-label">Chip states</h2>
+      <div class="pv-chipstrip">
+        <div>
+          <p class="pv-name">pending · aria-busy</p>
+          <div class="pv-anchor"><button type="button" class="lnslop-chip lnslop-pending" aria-label="Analyzing post for slop" aria-expanded="false" aria-busy="true"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">…</span></button></div>
+        </div>
+        <div>
+          <p class="pv-name">clean</p>
+          <div class="pv-anchor"><button type="button" class="lnslop-chip lnslop-good" aria-label="Slop 2.0 of 10, clean. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">2.0</span></button></div>
+        </div>
+        <div>
+          <p class="pv-name">borderline</p>
+          <div class="pv-anchor"><button type="button" class="lnslop-chip lnslop-meh" aria-label="Slop 4.7 of 10, borderline. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">4.7</span></button></div>
+        </div>
+        <div>
+          <p class="pv-name">slop</p>
+          <div class="pv-anchor"><button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button></div>
+        </div>
+        <div>
+          <p class="pv-name">error · press to retry</p>
+          <div class="pv-anchor"><button type="button" class="lnslop-chip lnslop-error" aria-label="Could not classify. Press to retry." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">?</span></button></div>
+        </div>
+        <div>
+          <p class="pv-name">floating · no action bar</p>
+          <div class="pv-anchor" style="block-size: 64px"><button type="button" class="lnslop-chip lnslop-bad" data-lnslop-floating="true" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pv-sec">
+      <h2 class="pv-label">In feed — popover open</h2>
+      <div class="pv-grid">
+        <div class="pv-stage">
+          <article class="pv-post lnslop-host">
+            <header class="pv-posthead">
+              <span class="pv-avatar"></span>
+              <span class="pv-id"><i style="inline-size: 132px"></i><i></i></span>
+            </header>
+            <div class="pv-lines"><i></i><i></i><i></i><i></i><i></i><i style="inline-size: 58%"></i></div>
+            <footer class="pv-actions"><i></i><i></i><i></i><i></i><button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="true"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button></footer>
+            <div class="lnslop-popover" role="dialog" aria-label="Slop analysis">
+              <header class="lnslop-head">
+                <strong class="lnslop-verdict lnslop-bad"><span class="lnslop-dot" aria-hidden="true"></span>Slop 8.4/10</strong>
+                <button type="button" class="lnslop-close" aria-label="Close">×</button>
+              </header>
+              <p class="lnslop-reason">Reads like: engagement bait, broetry, fabricated story.</p>
+              <div class="lnslop-train">
+                <span class="lnslop-train-label">Was this right?</span>
+                <button type="button" class="lnslop-vote lnslop-vote-clean">clean</button>
+                <button type="button" class="lnslop-vote lnslop-vote-borderline">borderline</button>
+                <button type="button" class="lnslop-vote lnslop-vote-slop">slop</button>
+              </div>
+              <p class="lnslop-meta">jev-1.13.0 · 3 examples</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="pv-stage lnslop-dark">
+          <article class="pv-post lnslop-host">
+            <header class="pv-posthead">
+              <span class="pv-avatar"></span>
+              <span class="pv-id"><i style="inline-size: 104px"></i><i></i></span>
+            </header>
+            <div class="pv-lines"><i></i><i></i><i></i><i></i><i></i><i style="inline-size: 71%"></i></div>
+            <footer class="pv-actions"><i></i><i></i><i></i><i></i><button type="button" class="lnslop-chip lnslop-good" aria-label="Slop 1.6 of 10, clean. View detail." aria-expanded="true"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">1.6</span></button></footer>
+            <div class="lnslop-popover" role="dialog" aria-label="Slop analysis">
+              <header class="lnslop-head">
+                <strong class="lnslop-verdict lnslop-good"><span class="lnslop-dot" aria-hidden="true"></span>Slop 1.6/10</strong>
+                <button type="button" class="lnslop-close" aria-label="Close">×</button>
+              </header>
+              <p class="lnslop-reason">No bait signals fired.</p>
+              <div class="lnslop-train">
+                <span class="lnslop-train-label">Was this right?</span>
+                <button type="button" class="lnslop-vote lnslop-vote-clean">clean</button>
+                <button type="button" class="lnslop-vote lnslop-vote-borderline">borderline</button>
+                <button type="button" class="lnslop-vote lnslop-vote-slop">slop</button>
+              </div>
+              <p class="lnslop-meta">jev-1.13.0 · 3 examples</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="pv-sec">
+      <h2 class="pv-label">Settings popup</h2>
+      <div class="pv-options-wrap">
+        <div class="lnslop-options">
+          <main class="lnslop-panel">
+            <h1>chamuy0</h1>
+            <p class="lnslop-lede">
+              Two quick steps and you are done. Your API key and your training
+              labels never leave this browser profile.
+            </p>
+
+            <section aria-labelledby="lnslop-access-h">
+              <h2 id="lnslop-access-h">Step 1. Grant access</h2>
+              <p class="lnslop-lede">
+                The extension needs permission to read your LinkedIn feed and to call
+                the TypeSafe API. Click once and accept the browser prompt.
+              </p>
+              <div class="lnslop-inline">
+                <button type="button">Allow access</button>
+              </div>
+              <p id="access-status" class="lnslop-status" role="status">Access is off. Click the button and accept the prompt.</p>
+              <div id="access-manual" class="lnslop-manual">
+                <p class="lnslop-manual-title">Prompt closes before you can click it?</p>
+                <p>
+                  Some Firefox builds, Zen included, dismiss the permission prompt in
+                  about a second. Grant it by hand instead:
+                </p>
+                <ol>
+                  <li>Open a new tab and go to <code>about:addons</code>.</li>
+                  <li>Click <strong>chamuy0</strong>, then the <strong>Permissions</strong> tab.</li>
+                  <li>Turn on access for <code>www.linkedin.com</code> and <code>api.typesafe.ai</code>.</li>
+                </ol>
+                <p>Then reopen this popup and reload linkedin.com.</p>
+              </div>
+            </section>
+
+            <section aria-labelledby="lnslop-key-h">
+              <h2 id="lnslop-key-h">Step 2. TypeSafe API key</h2>
+              <p class="lnslop-lede">
+                Paste your key from the TypeSafe console. Save, then open or reload
+                linkedin.com.
+              </p>
+              <form id="key-form" class="lnslop-field">
+                <label for="api-key">TypeSafe API key</label>
+                <div class="lnslop-inline">
+                  <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key" />
+                  <button type="submit">Save</button>
+                </div>
+                <p id="key-status" class="lnslop-status" role="status">Saved. Open or reload linkedin.com to classify with it.</p>
+              </form>
+            </section>
+
+            <section aria-labelledby="lnslop-train-h">
+              <h2 id="lnslop-train-h">Training examples</h2>
+              <p class="lnslop-lede">
+                Label posts from the popover on any LinkedIn post. The classifier
+                calibrates with your latest two examples per label.
+              </p>
+              <p id="training-count" class="lnslop-status" role="status">3 examples stored, newest first.</p>
+              <ul id="training-list" class="lnslop-examples">
+                <li class="lnslop-example">
+                  <span class="lnslop-tag lnslop-tag-slop">slop</span>
+                  <span class="lnslop-example-text">I interviewed a janitor at 5am. He looked me in the eyes and said: "success is rented, not owned." That conversation changed how I lead. Agree?</span>
+                </li>
+                <li class="lnslop-example">
+                  <span class="lnslop-tag lnslop-tag-borderline">borderline</span>
+                  <span class="lnslop-example-text">Excited to share our Q3 numbers. Growth mindset, relentless execution, and a team that never stops. Grateful for the journey.</span>
+                </li>
+                <li class="lnslop-example">
+                  <span class="lnslop-tag lnslop-tag-clean">clean</span>
+                  <span class="lnslop-example-text">We cut p95 latency from 840ms to 210ms by moving the session cache in-process. Writeup with flame graphs in the comments.</span>
+                </li>
+              </ul>
+            </section>
+          </main>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>

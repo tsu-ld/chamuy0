@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+version="$(sed -n 's/^  "version": "\([^"]*\)",$/\1/p' extension/manifest.json)"
+out="dist/chamuy0-${version}.zip"
+files=(manifest.json badge.css popup.html dist)
+for file in "${files[@]}"; do
+	if [[ ! -e "extension/${file}" ]]; then
+		echo "extension/${file} is missing" >&2
+		exit 1
+	fi
+done
+mkdir -p dist
+rm -f "$out"
+if command -v zip >/dev/null; then
+	(cd extension && zip -qr "../${out}" "${files[@]}")
+else
+	(cd extension && python3 -m zipfile -c "../${out}" "${files[@]}")
+fi
+python3 - "$out" "${files[@]}" <<'PY'
+import sys, zipfile
+out, required = sys.argv[1], sys.argv[2:]
+with zipfile.ZipFile(out) as bundle:
+    names = bundle.namelist()
+for name in required:
+    if not any(entry == name or entry.startswith(f"{name}/") for entry in names):
+        raise SystemExit(f"{out} is missing {name}")
+print(f"Verified {out}: {len(names)} entries")
+PY
+echo "Packaged ${out}"

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+pkg="$(sed -n 's/^  "version": "\([^"]*\)",$/\1/p' package.json)"
+ext="$(sed -n 's/^  "version": "\([^"]*\)",$/\1/p' extension/manifest.json)"
+if [[ "$pkg" != "$ext" ]]; then
+	echo "package.json version (${pkg}) must match extension/manifest.json (${ext})" >&2
+	exit 1
+fi
+if [[ ! "$ext" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+	echo "extension/manifest.json needs one numeric semantic version" >&2
+	exit 1
+fi
+
+bun run check

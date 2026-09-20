@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "chamuy0",
+  "version": "0.0.1",
+  "description": "Scores LinkedIn feed posts for slop with Jev, adds a badge to every post and lets you train it with one click.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "linkedin-slop@tsu-ld.dev",
+      "strict_min_version": "128.0"
+    }
+  },
+  "permissions": ["storage"],
+  "optional_host_permissions": [
+    "https://www.linkedin.com/*",
+    "https://api.typesafe.ai/*"
+  ],
+  "action": {
+    "default_title": "chamuy0 settings",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "dist/background.js",
+    "scripts": ["dist/background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/*"],
+      "js": ["dist/content.js"],
+      "css": ["badge.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_ui": {
+    "page": "popup.html",
+    "open_in_tab": true
+  }
+}

@@ -1,0 +1,106 @@
+import type { TrainingExample } from '../core/examples'
+import { extensionApi, isGecko } from './api'
+import { ACCESS_ORIGINS } from './origins'
+import { readApiKey, readTraining, writeApiKey } from './storage'
+
+const EXCERPT_LIMIT = 140
+const SHOWN_LIMIT = 4
+
+const keyInput = mustFind<HTMLInputElement>('#api-key')
+const keyForm = mustFind<HTMLFormElement>('#key-form')
+const keyStatus = mustFind<HTMLElement>('#key-status')
+const accessButton = mustFind<HTMLButtonElement>('#access-button')
+const accessStatus = mustFind<HTMLElement>('#access-status')
+const accessManual = mustFind<HTMLElement>('#access-manual')
+const trainingCount = mustFind<HTMLElement>('#training-count')
+const trainingList = mustFind<HTMLUListElement>('#training-list')
+
+async function start(): Promise<void> {
+  keyInput.value = await readApiKey()
+  await refreshAccess()
+  await renderTraining()
+  accessButton.addEventListener('click', () => {
+    void requestAccess()
+  })
+  keyForm.addEventListener('submit', (event) => {
+    event.preventDefault()
+    void saveKey()
+  })
+  extensionApi.permissions.onAdded.addListener(() => {
+    void refreshAccess()
+  })
+  extensionApi.permissions.onRemoved.addListener(() => {
+    void refreshAccess()
+  })
+}
+
+async function requestAccess(): Promise<boolean> {
+  const granted = await extensionApi.permissions.request({ origins: ACCESS_ORIGINS })
+  await refreshAccess(!granted)
+  return granted
+}
+
+async function refreshAccess(promptDismissed = false): Promise<void> {
+  const granted = await extensionApi.permissions.contains({ origins: ACCESS_ORIGINS })
+  accessButton.hidden = granted
+  accessManual.hidden = granted || !isGecko
+  if (granted) {
+    accessStatus.textContent = 'Access granted. Open or reload linkedin.com.'
+    return
+  }
+  if (promptDismissed) {
+    accessStatus.textContent = isGecko
+      ? 'The prompt closed before you could answer. Grant access by hand.'
+      : 'Access was denied. Click the button again and choose Allow.'
+    return
+  }
+  accessStatus.textContent = 'Access is off. Click the button and accept the prompt.'
+}
+
+async function saveKey(): Promise<void> {
+  const apiKey = keyInput.value.trim()
+  if (!apiKey) {
+    keyStatus.textContent = 'Enter a key first.'
+    return
+  }
+  await writeApiKey(apiKey)
+  const granted = await extensionApi.permissions.contains({ origins: ACCESS_ORIGINS })
+  keyStatus.textContent = granted
+    ? 'Saved. Open or reload linkedin.com to classify with it.'
+    : 'Saved. Grant access in step 1, then open linkedin.com.'
+}
+
+async function renderTraining(): Promise<void> {
+  const pool = await readTraining()
+  trainingCount.textContent = pool.length === 0
+    ? 'No examples yet.'
+    : `${pool.length} examples stored, newest first.`
+  const shown = pool.slice(-SHOWN_LIMIT).reverse()
+  trainingList.replaceChildren(...shown.map(buildExampleRow))
+}
+
+function buildExampleRow(example: TrainingExample): HTMLLIElement {
+  const row = document.createElement('li')
+  row.className = 'lnslop-example'
+  const tag = document.createElement('span')
+  tag.className = `lnslop-tag lnslop-tag-${example.label}`
+  tag.textContent = example.label
+  const text = document.createElement('span')
+  text.className = 'lnslop-example-text'
+  text.textContent = excerpt(example.text)
+  row.append(tag, text)
+  return row
+}
+
+function excerpt(text: string): string {
+  if (text.length <= EXCERPT_LIMIT) return text
+  return `${text.slice(0, EXCERPT_LIMIT)}...`
+}
+
+function mustFind<ElementType extends Element>(selector: string): ElementType {
+  const node = document.querySelector<ElementType>(selector)
+  if (!node) throw new Error(`Missing element ${selector}`)
+  return node
+}
+
+void start()

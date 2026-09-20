@@ -1,0 +1,194 @@
+{
+  "note": "Real posts from the public internet plus Tsu's feed (Sept 2026). label = expected classification. Normalized: broken emojis from copy-paste and UI chrome were removed. source = where the text was quoted.",
+  "posts": [
+    {
+      "id": "bonsai-27b",
+      "lang": "es",
+      "label": "clean",
+      "source": "feed",
+      "text": "Un modelo de 27B razonando en tu portátil. Y ocupa unos 6 GB.\n\nPrismML acaba de sacar Bonsai 2 27B y los números son una locura.\nPesos ternarios. Cada peso vale -1, 0 o +1. Nada más.\n\nResultado:\n• 98,2 % del rendimiento de la versión FP16\n• 5,95 GB de pesos frente a los ~54 GB originales\n• 55 tokens por segundo en el navegador con WebGPU en un M5 Max\n• Visión y tool calling para usarlo como agente\n\nY encima open weights con licencia Apache 2.0\n\nEl truco está en que la compresión se entrena con el modelo desde el principio. No cuantizan después y cruzan los dedos. Por eso aguanta tan bien con menos de 2 bits por peso.\n\nEso sí, ojo con la letra pequeña.\n\nLos 5,95 GB son el tamaño teórico. En la versión anterior el archivo real subía a ~7,2 GB y luego suma la caché KV. Con 16 GB de RAM vas sobrado. Con 8 GB, justito.\n\nHace un año esto era ciencia ficción. Hoy lo puedes probar gratis en tu navegador."
+    },
+    {
+      "id": "claude-code-blueprint",
+      "lang": "en",
+      "label": "slop",
+      "source": "feed",
+      "text": "But that's only the beginning.\n\nA well-structured Claude Code project can combine:\n• Rules → consistent engineering standards\n• Commands → reusable workflows\n• Skills → on-demand expertise\n• Agents → specialized AI teammates\n• MCP → external tool integrations\n• Hooks → deterministic guardrails\n\nThe real shift\n“AI that writes code” → “AI that understands your engineering system.”\n\nI’ve broken down the complete Claude Code project structure, with practical examples of how each component fits together.\n\nRead the new AMK Engineering Pulse newsletter:\nClaude Code Project Structure — The Blueprint for AI-Powered Development\n\n♻️ Repost if you’re building with AI coding agents.\n\n#ClaudeCode #AIEngineering #DeveloperProductivity #SoftwareEngineering #CodingWithAI #DevTools"
+    },
+    {
+      "id": "system-prompts-cc0",
+      "lang": "en",
+      "label": "borderline",
+      "source": "feed",
+      "text": "A random guy from Iceland has a github repo with 67k stars, that has the system prompts of Claude, GPT-6 Astra, Gemini, Grok, Cursor, Codex, and a dozen more — extracted, catalogued, updated regularly.\n\nYou might think - isn't it IP rights violation? Its not. CC0 license is the clearest possible signal that its legit and the fact that its been running for 16 months without being taken down backs that claim well.\n\nAnd the way of extracting these isn't as difficult as you might think. Send the chatbot an older known version of its system prompt and ask it to \"fix\" the errors. The model, trained to be helpful, treats it as a correction task and responds with the real current system prompt.\n\nThis is probably the most useful thing you can study right now if you're building AI products. \n\nThe way i see it, the model is the commodity, the system prompt is the product. The reason Claude feels different from GPT isn't just the weights, it's the thousands of tokens of careful instruction that shape how it thinks, what it refuses, how it formats and what it prioritizes. \n\nIf you're building anything with LLMs and you haven't gone through at least a few of these, you're basically skipping the part where you learn how the pros actually do it\n\nhttps://lnkd.in/gpMQrQJf\n\n#LLM #AIEngineering #PromptEngineering #OpenSource #SoftwareEngineering"
+    },
+    {
+      "id": "duelo-parque",
+      "lang": "es",
+      "label": "slop",
+      "source": "feed",
+      "text": "Un padre vuelve cada noche al parque donde solía jugar con su hijo, quien ya no está físicamente. Según la historia compartida, al acercarse, los columpios y algunos juguetes comienzan a moverse, una escena que para muchos puede resultar conmovedora, aunque por sí sola no demuestra que exista un fenómeno sobrenatural.\n\nMás allá de cuál sea la explicación del movimiento, la escena representa algo profundamente humano: el duelo y la dificultad de desprendernos emocionalmente de quienes amamos. La persona puede morir, pero los recuerdos, los lugares y el vínculo construido con ella pueden permanecer durante toda una vida.\n\nHay personas que se van físicamente, pero dejan recuerdos capaces de seguir moviéndose dentro de nosotros."
+    },
+    {
+      "id": "autoeficacia",
+      "lang": "es",
+      "label": "slop",
+      "source": "feed",
+      "text": "Decirle “tú puedes” ayuda.\n\nPero hay algo todavía más potente:\n\ndejarle comprobar que puede.\n\nPorque una cosa es que alguien te diga que confía en ti.\n\nY otra muy distinta es pensar:\n\n“Lo he conseguido yo.”\n\nAhí entra en juego la autoeficacia.\n\nTiene que ver con la percepción que vamos construyendo sobre nuestra capacidad para afrontar determinadas tareas o retos.\n\nY una de las formas de desarrollarla es precisamente esta:\n\ntener oportunidades reales de intentarlo.\n\nProbar.\n\nEquivocarse.\n\nBuscar otra manera.\n\nY, a veces, conseguirlo.\n\nPor eso hay algo que hacemos con toda la buena intención del mundo y que conviene revisar:\n\nayudar demasiado rápido.\n\nVemos que tardan.\n\nQue se frustran.\n\nQue no les sale a la primera.\n\nY enseguida intervenimos.\n\nPero cuando hacemos por ellos algo que ya podían intentar, podemos quitarles una oportunidad de practicar por sí mismos y descubrir de qué son capaces.\n\nEso no significa dejarles solos ante algo que no pueden hacer.\n\nNi negarles ayuda.\n\nSignifica ajustar nuestra ayuda.\n\nA veces necesitan que intervengamos.\n\nY otras veces necesitan simplemente unos segundos más.\n\nEsperar.\n\nObservar.\n\nDarles margen.\n\nY ver qué hacen.\n\nTambién importa cómo reaccionamos cuando lo consiguen.\n\nNo transmite exactamente lo mismo decir:\n\n“¡Qué lista eres!”\n\nque:\n\n“Has encontrado la forma.”\n\n“No te salía y has seguido intentándolo.”\n\n“Lo has hecho tú.”\n\nEn el primer caso ponemos el foco en una cualidad de la persona.\n\nEn el segundo, en lo que ha hecho para conseguirlo:\n\nsu estrategia, su esfuerzo, su forma de afrontar la dificultad.\n\nY tampoco hace falta elogiar absolutamente todo.\n\nA veces basta con decir:\n\n“Lo has hecho tú.”\n\nY dejar espacio para que sean ellos quienes sientan satisfacción por haberlo conseguido.\n\nPorque no queremos que todo dependa de escuchar constantemente:\n\n“¡Muy bien!”\n\nTambién queremos que, poco a poco, puedan reconocer por sí mismos:\n\n“Esto me costó, pero pude hacerlo.”\n\nCon pequeñas oportunidades como esta les damos espacio para practicar autonomía, persistir ante una dificultad y comprobar de qué son capaces.\n\nAsí que la próxima vez que vayas a ayudar automáticamente, prueba algo muy sencillo:\n\nespera unos segundos.\n\nQuizá necesite tu ayuda.\n\nO quizá no.\n\nY a veces, ese pequeño margen es justo lo que necesita para descubrir:\n\n“Puedo hacerlo.”\n\n———\n\nSi quieres trabajar autonomía, autoestima, límites o situaciones concretas del día a día con tus hijos, puedes reservar una sesión conmigo desde el enlace de mi perfil."
+    },
+    {
+      "id": "aprender-a-programar",
+      "lang": "en",
+      "label": "clean",
+      "source": "feed",
+      "text": "How I learnt to code:\n\nI copied and pasted crap from stackoverflow until it worked, then I applied for a programmer job where the interviewer finished the test for me coz I was clueless, they gave me the job anyway, at the job this wizard came over when I had an issue and made a blur with his hands over the keyboard and code appeared. I said \"what was that?\" he said \"what?\" I said \"whatever you just did, how did you do that?\" he said he just memorized it all and wrote it....\n\nThen I just started learning to do that."
+    },
+    {
+      "id": "artemis-google",
+      "lang": "es",
+      "label": "slop",
+      "source": "feed",
+      "text": "¡Google hace de código abierto ARTEMIS! Te permite controlar Android con IA.\n\nPerfecto para crear automatizaciones o probar apps.\n\n✓ Para Claude Code, Codex, Cursor...\n✓ Acierta el +99% de las tareas\n✓ Conectas el móvil y listo\n\n→ https://lnkd.in/e_YrPBET"
+    },
+    {
+      "id": "gracias-peru",
+      "lang": "es",
+      "label": "slop",
+      "source": "feed",
+      "text": "¡Gracias Perú por todo el cariño! Ya viajando de vuelta a casa. Un like y vuelvo el año que viene. ❤️"
+    },
+    {
+      "id": "yc-agent-relay",
+      "lang": "en",
+      "label": "borderline",
+      "source": "feed",
+      "text": "Y Combinator didn't give us an interview in 2012, Will Washburn and I decided to give it a go again 14 years later. Excited to announce we have joined the Fall 2026 batch with Agent Relay. Try it today https://lnkd.in/eqbdE3U7"
+    },
+    {
+      "id": "fundador-agencias",
+      "lang": "en",
+      "label": "slop",
+      "source": "https://www.buzzfeednews.com/article/katienotopoulos/we-asked-a-poetry-professor-about-linkedin-poems",
+      "text": "How I founded a multi-million-dollar agency in six months: Step 1: Quit job. Step 2: Move cities. Step 3: Go out drinking with a new friend. Step 4: After several hours of knowing them, invest all your money into their idea. Step 5: Purchase an office you can't afford. Step 6: Call your parents saying, \"I made a huge mistake.\" Step 7: Land one client who barely covers rent. And keep paying yourself nothing. Step 8: Make sure to drink all the free beer in the coworking space to survive. Step 9: Turn the client into a believer who refers two more clients. Step 10: Hire your first paid intern. Step 11: Change everything about the business. Step 12: Realize that nothing you do is certain to work out. Step 13: Something works out. Step 14: Double down on it. Step 15: Profit. Step 16: Write viral rags to riches LinkedIn posts. Step 17: Call your parents saying, \"I'm a genius.\" Step 18: Learn to ignore the haters. Inspired by my co-founder, Houston Golden"
+    },
+    {
+      "id": "despedido-martes",
+      "lang": "en",
+      "label": "slop",
+      "source": "https://www.linkedin.com/posts/dw1232_i-got-fired-on-a-random-tuesday-morning-activity-7289665984167116801-mgy8",
+      "text": "I got fired on a random Tuesday morning. With zero warning. NOTHING! It went like this: I woke up excited for the day. I made a coffee and sat at my desk. I opened my laptop to check my inbox. At the top is an email with the subject line: \"URGENT COMPANY MEETING\". My heart sank. I knew what was coming. Why? Because 12 months prior, I'd been fired from my dream job in a large tech company. (Not my fault! It was down to a technicality around my student visa but I knew what it felt like). So... I join this call 2 mins early. The entire team is waiting - tense and nervous. Then the CEO drops the bomb: \"Unfortunately, we're winding down our US operations.\" That's it. Everyone's out of a job."
+    },
+    {
+      "id": "despedido-88-dias",
+      "lang": "en",
+      "label": "slop",
+      "source": "https://www.linkedin.com/posts/curtisaljones_70k-post-impressions-in-4-days-all-from-activity-7443038825901162496-9kOM",
+      "text": "I was FIRED after 88 days. My 60-day evaluation? Went great. Attendance? Solid. No warnings. No red flags. And still... \"The company decided to go in a different direction.\" That situation showed me something real: You should NEVER rely on a single source of income. Because let's be honest for a second... Nobody is thinking about your bills. Nobody is thinking about your family. And if I'm being real? It felt like a decision based off of hurt ego or intimidation. But truthfully... I had already outgrown the micromanagement crabs in a barrel environment. So why would I shrink myself to fit into spaces I worked so hard to evolve from? I was raised to: Go to school. Get a degree. Land a \"safe\" and \"secure\" job. But that day? That job didn't provide security... My business did."
+    },
+    {
+      "id": "jorge-historiador",
+      "lang": "es",
+      "label": "slop",
+      "source": "https://es.linkedin.com/posts/nocodehackers_hoy-quiero-contarte-la-historia-de-jorge-activity-7457031749294895104-xhcH",
+      "text": "Hoy quiero contarte la historia de Jorge Contreras, y cómo un historiador acabó digitalizando las operaciones de Spain Free Tours, una empresa de turismo con 95 trabajadores y 300.000 clientes al año. Jorge no venía de tecnología. Estudió historia. Pero la vida le llevó al mundo del turismo, y un día se dio cuenta de que su empresa lo gestionaba todo de forma manual. Pedidos, contabilidad, bases de datos de clientes, fichas de trabajadores... todo a mano, todo disperso, todo dependiendo de que alguien lo recordara. No era programador. No tenía perfil técnico. Nunca había construido nada parecido. Hizo el programa y construyó esto: Un gestor de contabilidad para registrar gastos y pagos de trabajadores. Un sistema de formularios para gestionar solicitudes de grupos privados. Una base de datos centralizada con 300.000 clientes, con filtros, interfaces y análisis. Fichas individuales de trabajadores conectadas entre sí y con el resto del sistema. Todo interrelacionado. Todo funcionando. Una empresa que lo hacía todo a mano, hoy tiene un sistema que sostiene sus operaciones. Y Jorge no lo hizo porque fuera técnico. Lo hizo porque aprendió a ver su empresa como un sistema y supo construir la solución. Y eso es lo que enseñamos aquí. Si Jorge pudo construir todo esto partiendo de cero, la pregunta no es si tú puedes. La pregunta es si vas a reservar tu hueco antes de que se cierren las plazas. Quedan muy pocos huecos de llamada y el programa empieza el 6 de mayo."
+    },
+    {
+      "id": "jefe-apagado",
+      "lang": "es",
+      "label": "slop",
+      "source": "https://es.linkedin.com/posts/andresdiazgranados_mi-jefe-me-llamó-y-me-dijo-te-veo-apagado-activity-7396174036881539072-T0LO",
+      "text": "Mi jefe me llamó y me dijo: 'Te veo apagado. Elige el curso que quieras, sobre lo que sea. La empresa lo paga'. \"El trabajo operativo me estaba matando\", me dijo. \"No por el volumen, sino por lo repetitivo. Todo era copy-paste, día tras día, como si yo no tuviera cerebro para algo más.\" Llevaba tres años en esa posición. Era uno de los mejores del equipo: cumplía, lideraba, entrenaba a los nuevos... pero algo en él se había apagado. Me lo contó así: \"Llegaba a la oficina, me sentaba frente al computador y pensaba: ¿esto es todo lo que voy a hacer con mi vida?\" Su jefe lo notó. Le pidió que pasara por su oficina después del almuerzo. Él pensó que era para hablar de entregables. Pero no. Lo miró y le dijo: \"Te veo desconectado. Y no quiero perderte. Así que haz una cosa: busca un curso. El que quieras. Puede no tener nada que ver con tu rol. Diseño, cocina, escritura, lo que sea. Si te reanima, lo pagamos.\" Me dijo que salió de ahí en shock. Nunca nadie le había ofrecido algo así sin una agenda detrás. Terminó tomando uno de storytelling, en las noches. No tenía nada que ver con finanzas ni con sus KPIs. Pero poco a poco se fue reconectando consigo mismo. \"Fue el primer curso que tomé en años por gusto y no por obligación. Y curiosamente, fue lo que me hizo quedarme.\" Y agregó algo que me quedó grabado: \"Mi jefe no me salvó el puesto. Me salvó el sentido.\""
+    },
+    {
+      "id": "director-creativo",
+      "lang": "es",
+      "label": "slop",
+      "source": "https://es.linkedin.com/posts/renzo-casaretto_la-primera-vez-que-fui-director-creativo-activity-7485336542924713984-O7QO",
+      "text": "La primera vez que fui director creativo, el ascenso me lo di yo mismo. Un día mi jefe me llamó a su oficina. \"Necesito que organices el departamento creativo. Entran dos cuentas nuevas y hay que estar fuertes cuando lleguen. Ojo, no hay presupuesto. Hazlo con lo que hay.\" Acepté en el acto. Ya en esa época había entendido que muchas empresas tienen una curiosa forma de ascenderte. Primero te dejan hacer el trabajo durante un buen tiempo. Después llega el cargo. Y, con un poco de suerte, algún día también el sueldo. Yo ya conocía a mi gente. Sabía quién estaba escondiéndose, quién estaba listo para más y quién solo necesitaba que alguien confiara en él. Así que armé dos equipos grandes de los tres que teníamos. Un DCG. Dos DC. Cada uno con su dupla de arte y sus juniors, para que los que recién empezaban aprendieran al lado de quienes ya habían recorrido el camino. Al redactor senior más antiguo lo ascendí a director creativo. Se lo había ganado con los años. Y siempre he creído que a la gente hay que darle lo que se ganó, no lo que a uno le conviene. No quedaban más redactores senior. Así que la ocupé yo. Más nada. Al toque presenté el organigrama. Mi jefe lo leyó. Me miró. Volvió al organigrama. Se recostó en la silla, sonrió con esa mezcla de sorpresa y resignación que solo tienen los buenos jefes y, sin levantar mucho la voz, me lanzó la frase del tío Ben: \"Un gran poder conlleva una gran responsabilidad.\" Lo miré y le respondí: \"Lo sé.\" Volvió a mirar el organigrama. Sonrió otra vez. \"¿Te conté que no había presupuesto, no?\" En ese momento era lo de menos. La reorganización estaba aprobada. Mi ascenso también. Ganamos todos."
+    },
+    {
+      "id": "reconocimiento-viernes",
+      "lang": "es",
+      "label": "slop",
+      "source": "https://es.linkedin.com/posts/martinalonsoaiquipa_humanamente-liderazgoconsciente-reconocimientolaboral-activity-7342978504386355200-Stm6",
+      "text": "Era viernes, 6:30 p. m., y pensaba que nadie notaba mi esfuerzo. Había pasado semanas cubriendo a un compañero enfermo, terminando reportes y asegurando que el equipo no se quedara atrás. Justo cuando me iba, mi jefe me llamó. Pensé que me daría otra tarea. Pero no. Me miró y dijo: — 'Sé todo lo que has hecho. No lo pedí, pero lo diste igual. Eso es liderazgo. Eres el tipo de persona que construye equipos fuertes, no con títulos... sino con ejemplo.' Me quedé sin palabras. Sentí un nudo en la garganta. Ese día entendí que el reconocimiento no siempre necesita un bono. A veces, solo necesita verdad, presencia y humanidad. Y no, nunca lo olvidé. ¿Alguna vez alguien te reconoció de forma tan honesta que se te quedó grabado? Cuéntalo o etiqueta a esa persona. Tu historia puede inspirar a otros a reconocer más."
+    },
+    {
+      "id": "cliente-14452",
+      "lang": "en",
+      "label": "borderline",
+      "source": "https://www.linkedin.com/posts/kurtispykes_2-weeks-ago-i-wrote-a-linkedin-post-that-activity-7455564138157703168-PiWJ",
+      "text": "2 weeks ago, I wrote a LinkedIn post that made my client $14,452 in 24 hours. The first three posts promoting their product completely flopped. 5 days before launch, only 3 seats were sold. And they were all from past customers my client reached out to manually. I was on the verge of losing my highest-paying customer. Until they informed me, \"Someone told me they didn't even know I was offering this.\" It felt like Because we had already posted about the product 3 times. So I went and reviewed everything. The problem was obvious: • The visuals had nothing to do with the offer • The hook never mentioned the product • The content created zero intrigue • The CTA was just a lazy P.S. at the bottom So I scrapped everything we had queued. In the next post I wrote, I constantly asked myself: \"How can we make it painfully obvious we're offering this product?\" I wrote the draft. Got it approved. Scheduled it. And waited... The post took the heck off. Impressions spiked. Comments came in. DMs started rolling. 24 hours later, 12 more seats sold. By the end of the week... Sold out."
+    },
+    {
+      "id": "demos-linkedin",
+      "lang": "en",
+      "label": "borderline",
+      "source": "https://www.linkedin.com/posts/marcrichardfollow_275-demos-booked-from-a-single-linkedin-activity-7414939025230471168-fitF",
+      "text": "275 demos booked from a single LinkedIn post. This wasn't luck. Here's why. • We activated a creator trusted by the client's ICP • One specific use case, not the full product • The goal: engagement and intent • Warm traffic sent to a dedicated landing page Organic results: → 94K impressions → 1,500 clicks → 167 demos booked → CPL: €5.16 Once organic proved the conversion, we simply kept showing the same post to the right audience. Using Thought Leader Ads. TLA results: → €4,028 spend → ~60K additional impressions → ~108 extra demos → CPL: ~€37 (3–4× lower than their best acquisition channel) Same post. Same creator. More volume. That's Creator-Led Growth."
+    },
+    {
+      "id": "roas-linkedin",
+      "lang": "en",
+      "label": "borderline",
+      "source": "https://www.linkedin.com/posts/jorritvanginkel_i-tracked-my-actual-linkedin-roi-last-month-activity-7430532865672556544-yQUu",
+      "text": "I tracked my ACTUAL LinkedIn ROI last month. The numbers got out of hand fast ⤵︎ 71,511 organic views. 26 posts. Zero ad spend. Here's what that's actually worth: What you can measure: \"Media value\" vs time invested 71,511 views at $30 CPM: $2,145 you didn't have to spend on ads. Time invested: 15 min per post max (using Ziplined) × 26 posts = 6.5 hours. At €100/hr: €650 in → €2,145 out. ROAS: 3.3x At €150/hr: €975 in → €2,145 out. ROAS: 2.2x At €250/hr: €1,625 in → €2,145 out. ROAS: 1.3x Positive at every rate. Before anything else. What you can almost measure: Sales That $2,145 doesn't include a single deal/sale. Ziplined has been live for 12 days. I've generated around €5,000 in revenue. Entirely from founders who found me through consistent posting. €975 (at $150/hr) in → €5,000 out. ROAS: 5.1x Combined return (media value + revenue): €7,145 on 6.5 hours of work."
+    },
+    {
+      "id": "caso-mba",
+      "lang": "es",
+      "label": "clean",
+      "source": "https://morgansmedia.cl/blog/caso-educacion-ejecutiva-abm-linkedin-3-capas-cac-60",
+      "text": "Una institución de educación ejecutiva chilena bajó su CAC (costo de adquisición de cliente: cuánto invierte una empresa en marketing y ventas para conseguir cada cliente nuevo) del programa MBA ejecutivo de USD 980 a USD 392 en cinco meses. El volumen de inscripciones se mantuvo. El pipeline cualificado subió 22%. La palanca no fue presupuesto adicional ni cambio de oferta. Fue rearmar el modelo ABM (Account-Based Marketing) en LinkedIn en tres capas con disciplina operativa. La institución educativa ofrece un programa MBA ejecutivo de 18 meses con ticket entre USD 8.000 y USD 15.000. Cohorts de 35-50 alumnos por edición. Dos ediciones al año (marzo y agosto). La audiencia objetivo: gerentes, directores y dueños de PyMEs en Chile, entre 32 y 48 años. Inscripciones por edición: 40 alumnos promedio. Tasa de cierre desde lead a inscrito: 4,8%. Pipeline mensual: aproximadamente 220. Inversión marketing mensual: USD 28.000 distribuidos en 4 canales."
+    },
+    {
+      "id": "caso-seo-kaaten",
+      "lang": "es",
+      "label": "borderline",
+      "source": "https://es.linkedin.com/posts/josep-deulofeu-mayoral_seoecommerce-seoshopify-activity-7449709303445245952-aLv-",
+      "text": "Caso de éxito SEO/GEO del proyecto Kaaten. Crecimiento del +59% en número de palabras clave en Top 10 en menos de 7 meses = Más ventas con el canal orgánico y más \"descubribilidad\" de la marca. Algunos puntos claves del proyecto SEO en su Shopify que podrás aprender en el caso superando a competidores como Leroy Merlin, Ikea o Amazon para la vertical de productos de \"estores\". Prioriza por negocio (ACTA). Antes de hacer SEO, decide qué parte del catálogo paga la fiesta. No todo merece el mismo esfuerzo. Empieza por lo que mueve margen y recurrencia. Aumento de la visibilidad en LLMs. Gracias a trabajar una estrategia SEO long tail y ejecutar el SEO técnico especifico para estos bots hemos conseguido aumentar la visibilidad de la marca en los LLMs. Crea clústers que generen caja. Agrupa URLs por vertical rentable y empuja autoridad hacia lo estratégico. El SEO no es democrático: es jerárquico."
+    },
+    {
+      "id": "latency-postmortem",
+      "lang": "en",
+      "label": "clean",
+      "source": "https://dev.to/sergey_shinder_ab2d943365/nobody-could-tell-me-when-the-latency-had-started-1cfd",
+      "text": "The orders API had a p95 of nine hundred milliseconds. It is supposed to be around two hundred and fifty, and the number in my head from the last time I had looked properly was two hundred and forty. The escalation asked one question, and it took most of a day to answer: when did this start, and what did we do? Nothing had failed. Nothing had alerted, because the latency alert is set at two seconds and the error budget was intact. The service was slower than it used to be, and that is a category of problem our monitoring had no opinion about. Dating it was archaeology. The history was there, so the step was findable once somebody plotted thirty days rather than the six hours every dashboard opens on: a clean jump on a Thursday afternoon, five weeks earlier. Then we had to establish what happened on that Thursday, and that meant four different systems. Deploy history in the CI tool. Flag changes in a product tool with a thirty day audit log, exportable as a CSV. Infrastructure applies in a pipeline's run history. And database changes in a ticket queue, which is where it eventually turned up: a DBA had enabled an audit logging parameter during a compliance push, which added a synchronous write to every transaction. No part of that was anybody's fault. The change was legitimate, reviewed, and announced in a channel. It simply was not recorded anywhere a graph could see it. What we built afterwards is unglamorous. Deploys, flag flips, infrastructure applies and database changes all publish an event to one stream, and every dashboard draws that stream as annotations, so a step and its cause appear in the same picture. A weekly job posts each service's p50, p95, error rate and throughput beside the previous week's with the percentage difference, into the team channel. In its first month that report found two more regressions, one of them a cache that had stopped being used. And we keep thirteen months of a small set of series through recording rules, because a comparison against last quarter is worth nothing if the data stops at fifteen days. Our monitoring was built to answer whether the system is bad right now. Most of what it has cost us is being worse than it was, and nothing anywhere was asking that."
+    },
+    {
+      "id": "migracion-precisión",
+      "lang": "en",
+      "label": "borderline",
+      "source": "https://engineering.moniepoint.com/system-migration-data-accuracy",
+      "text": "Migrating critical systems isn’t just about launching new services. It’s about migrating trust. Not long ago, I was part of a team working on a major system migration: moving important business logic from a live, production monolith to a brand-new microservice with its own Postgres database. The old monolith stayed live, serving 100% of public traffic. The new system had to prove itself — from zero — before anyone could rely on it. Our mission was clear: Prove 99.9% data accuracy before any cutover. When we started, our accuracy was effectively 0%. This is a look back at how we approached that challenge: the strategies, the technical lessons, and how real trust is built — slowly, carefully, and with metrics. Nothing is accurate until you can prove it. At the beginning: No full validation pipeline. No accuracy metrics. No live comparison in place. Without verification, assuming correctness would have been reckless. We treated data accuracy as seriously as uptime — building it into our operational SLOs."
+    },
+    {
+      "id": "view-transitions",
+      "lang": "es",
+      "label": "clean",
+      "source": "https://mintec.co/es/blog/native-view-transitions-migration/",
+      "text": "En 2026, el navegador incluye primitivas de transición que antes requerían 50–100 KB de JavaScript. Reemplazamos Framer Motion, Barba.js y manejadores de scroll personalizados con View Transitions API, Speculation Rules y animaciones CSS basadas en scroll en un portafolio multimedia. El resultado: 85 KB menos de dependencias JS, una mejora del 18% en INP y animaciones más suaves en dispositivos de gama baja. El trimestre pasado reconstruimos el portafolio de un cliente de producción de video — una empresa con 60+ reels, detrás de cámaras y muestras de trabajo. El sitio original usaba Framer Motion para transiciones entre páginas, Barba.js para convertir el sitio multi-página de Astro en una experiencia tipo SPA, y ScrollTrigger para revelaciones basadas en scroll. Total de JavaScript relacionado con animación: 112 KB minificados. El sitio se veía espectacular en una MacBook Pro. En un Moto G Power las transiciones se entrecortaban, la respuesta a interacciones llegaba con retraso y el INP superaba consistentemente los 300 ms."
+    },
+    {
+      "id": "rag-pipeline",
+      "lang": "es",
+      "label": "clean",
+      "source": "https://angelkurten.com/es/blog/practical-rag-pipeline-guide",
+      "text": "He pasado las ultimas dos semanas reconstruyendo un pipeline RAG de produccion para ContextIA, un asistente de conocimiento de equipo. El punto de partida era una implementacion de libro de texto: la consulta del usuario entra a un modelo de embedding, la similitud coseno extrae los top-k chunks de ChromaDB, esos chunks se meten en un prompt, y el LLM genera una respuesta. Funcionaba. Mas o menos. Los usuarios recibian respuestas. Esas respuestas estaban confidentemente equivocadas alrededor del 20% de las veces, y el sistema no tenia idea de cuales respuestas eran buenas y cuales eran ruido alucinado. Cuando finalmente medimos la precision de retrieval correctamente, el numero fue 58%. Eso significa que casi la mitad del contexto alimentado al modelo de lenguaje era irrelevante. El LLM estaba haciendo su mejor esfuerzo para sintetizar basura en respuestas que sonaban coherentes, y lo hacia perturbadoramente bien. Este post recorre lo que se rompio, lo que hicimos al respecto, y la arquitectura concreta que llevo la precision de retrieval al 91%. Sin palabreria. Codigo incluido."
+    },
+    {
+      "id": "dynamodb-p95",
+      "lang": "en",
+      "label": "clean",
+      "source": "https://umesh-malik.com/blog/zero-downtime-database-migration-dual-writes",
+      "text": "Vercel published how they migrated the database behind every Vercel build on 11 August 2026 — Redis to DynamoDB, February to April. It is a good writeup precisely because it includes the parts that went wrong, and those parts are the transferable ones. Here is the number that should change how you run these migrations. On getWarmPoolTokenCount, the P95 measured 1.29ms on Redis and 5.13ms on DynamoDB. Roughly 4x — slower, but the kind of slower a team argues its way past in a review. At P90, where the gap was widest, it was about 17x. That inversion is not a typo and it is not rare. Redis and DynamoDB have differently-shaped distributions: Redis is tight and low with a tail that only appears at the very top, while DynamoDB's response times sit higher and flatter across the middle percentiles. Comparing them at one percentile tells you about that percentile and nothing else. Their own conclusion is the line worth stealing: even a 1ms-to-15ms query time degradation on P90 could bring down our warm pool management logic."
+    },
+    {
+      "id": "hachyderm-traffic",
+      "lang": "en",
+      "label": "clean",
+      "source": "https://community.hachyderm.io/blog/2022/12/03/leaving-the-basement/",
+      "text": "Hachyderm obtained roughly 30,000 users in 30 days; or roughly 1 new user every 1.5 minutes for the duration of the month of November. Our busiest traffic day was 11/21/22 where we processed 999.80 GiB in RX/TX traffic in a single day. During the month of November we averaged 36.86 Mbps in traffic with samples taken every hour. On November 27th, I filed the 1st of what would become 21 changelogs for our production infrastructure. The initial report was failing images in production. The initial investigation lead our team to discover that our NFS clients were behaving unreasonably slow. However we did determine that we had scaled our compute nodes very high in the process of investigating NFS. Load averages on Yakko, Wakko, and Dot were well above 1,000 at this time."
+    }
+  ]
+}

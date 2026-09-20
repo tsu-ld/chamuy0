@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>lnslop — feed fixture</title>
+    <link rel="stylesheet" href="../extension/badge.css" />
+    <style>
+      body {
+        --lnslop-ink: rgba(0, 0, 0, .9);
+        --lnslop-ink-soft: rgba(0, 0, 0, .6);
+        --lnslop-surface: #fff;
+        --lnslop-hairline: rgba(0, 0, 0, .15);
+        --lnslop-hairline-soft: rgba(0, 0, 0, .08);
+        --lnslop-hover: rgba(0, 0, 0, .08);
+        --lnslop-positive: #057642;
+        --lnslop-caution: #915907;
+        --lnslop-negative: #b24020;
+        --lnslop-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+        margin: 0;
+        padding: 24px;
+        background: #f3f2ef;
+        font: 14px/1.45 system-ui, sans-serif;
+      }
+      .card { max-width: 560px; margin: 0 auto 16px; padding: 12px 16px; border: 1px solid rgba(0, 0, 0, .15); border-radius: 8px; background: #fff; }
+      .author { margin: 0 0 8px; font-weight: 600; }
+      .bar { display: flex; gap: 14px; margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(0, 0, 0, .1); }
+      .bar .bar-btn { display: flex; gap: 6px; align-items: center; border: 0; background: none; color: rgba(0, 0, 0, .6); font: inherit; }
+      svg { width: 16px; height: 16px; }
+    </style>
+  </head>
+  <body>
+    <!-- 2026 feed DOM: hashed classes, no data-urn, display:contents wrapper, stable data-testid and svg ids -->
+    <div data-display-contents="true">
+      <div componentkey="post-new-1" class="_649b9f0b d1901be7 card">
+        <p class="author">Pablo Sandoval</p>
+        <div id="translatable-commentary-abc">
+          <p>
+            <span data-testid="expandable-text-box">La semana pasada tuve la oportunidad de representar a Accenture Argentina en la feria de empleabilidad de la UNSa. Dicté una charla sobre inteligencia artificial generativa y después acompañé al equipo en el stand durante toda la jornada.<button type="button" data-testid="expandable-text-button"><span>… more</span></button></span>
+          </p>
+        </div>
+        <div class="bar">
+          <button aria-label="Reaction button state: no reaction"><svg id="thumbs-up-outline-small"></svg><span>Like</span></button>
+          <button><svg id="comment-small"></svg><span>Comment</span></button>
+          <button><svg id="repost-small"></svg><span>Repost</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- legacy feed DOM with data-urn -->
+    <div data-urn="urn:li:activity:123" class="feed-shared-update-v2 card">
+      <p class="author">Legacy Author</p>
+      <div class="update-components-text">I copied and pasted crap from stackoverflow until it worked, then I applied for a programmer job and learned by watching a wizard type.</div>
+      <div class="bar">
+        <button><svg id="like-small"></svg><span>Like</span></button>
+        <button><svg id="comment-legacy-small"></svg><span>Comment</span></button>
+      </div>
+    </div>
+  </body>
+</html>

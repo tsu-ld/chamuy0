@@ -1,0 +1,13 @@
+{
+  "threshold": 3,
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/*.test.ts",
+    "**/*.d.ts",
+    "**/fixtures/**",
+    "**/training/**",
+    "**/dev/preview.html",
+    "**/*.md"
+  ]
+}

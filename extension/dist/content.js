@@ -1,0 +1,669 @@
+// core/hash.ts
+var HASH_SEED = 5381;
+var HASH_SHIFT = 5;
+var HASH_RADIX = 36;
+function hashText(text) {
+  let hash = HASH_SEED;
+  for (let index = 0;index < text.length; index += 1) {
+    hash = (hash << HASH_SHIFT) + hash ^ text.charCodeAt(index);
+  }
+  return (hash >>> 0).toString(HASH_RADIX);
+}
+function textKey(text) {
+  return `${hashText(text)}:${text.length}`;
+}
+
+// extension/api.ts
+var scope = globalThis;
+var extensionApi = scope.browser ?? scope.chrome;
+var isGecko = scope.browser !== undefined;
+
+// core/rubric.ts
+var SCORE_QUESTION_KEY = "slop_score";
+var VERDICTS = ["clean", "borderline", "slop"];
+var SCORE_INSTRUCTIONS = "Rate how much this LinkedIn post is slop: engagement bait, broetry (dramatic one-line paragraphs), manufactured hype, empty corporate jargon, generic AI-written text, or a fabricated story with a forced moral. Judge content and style, regardless of the post language. A post can cite numbers and still be slop when it wraps them in hype or reads like a content-farm summary. A first-person story that quotes a boss, recruiter or colleague word for word and ends with a tidy lesson is usually fabricated bait; a messy, offhand anecdote without a tidy lesson is not. The first level is a plain, concrete post with real information or a genuine personal anecdote; the last level is pure bait that asks for interaction while adding nothing.";
+var SCORE_CRITERIA = [
+  "Plain, concrete, verifiable information or a real specific personal experience, written without hype.",
+  "Real substance with a touch of hype or formatting.",
+  "Real information wrapped in hype, emoji bullets or manufactured excitement.",
+  "Content-farm texture: recycled news, breathless tone, little of the author in it.",
+  "Vague or promotional, with some real substance.",
+  "Half substance, half filler or self-promotion.",
+  "Filler dominates, with very little information.",
+  "A story engineered as bait: fake vulnerability, quoted dialogue, tidy moral; or promotion disguised as advice.",
+  "Classic bait: broetry formatting, jargon, forced moral.",
+  "Pure engagement bait: asks for likes, comments or reposts while adding nothing."
+];
+var SIGNAL_DEFINITIONS = [
+  {
+    key: "engagement_bait",
+    label: "Engagement bait",
+    instructions: 'Explicitly asks for interaction (like, comment, tag, repost) or closes with empty questions such as "agree?".',
+    criteria: {
+      true: "Explicitly asks for interaction or closes with an empty question.",
+      false: "Does not ask for interaction or close with an empty question."
+    }
+  },
+  {
+    key: "humblebrag",
+    label: "Humblebrag",
+    instructions: "Shows off an achievement, success or virtue disguised as humility, vulnerability or advice.",
+    criteria: {
+      true: "Brags about a success or virtue through a humble or vulnerable framing.",
+      false: "Does not brag through a humble or vulnerable framing."
+    }
+  },
+  {
+    key: "ai_generic",
+    label: "AI generic",
+    instructions: "Reads like AI-generated or content-farm text: predictable template, filler phrases, emoji bullet lists, breathless hype, no personal voice and no concrete details.",
+    criteria: {
+      true: "Reads like AI-generated or content-farm text with template structure and no personal voice.",
+      false: "Reads like text written by a person about something specific."
+    }
+  },
+  {
+    key: "buzzwords",
+    label: "Corporate buzzwords",
+    instructions: 'High density of empty corporate or fashion jargon (synergy, mindset, disruptive, leadership, "the future of work").',
+    criteria: {
+      true: "Heavy use of empty corporate or fashion jargon.",
+      false: "Little or no empty corporate jargon."
+    }
+  },
+  {
+    key: "broetry",
+    label: "Broetry",
+    instructions: "Uses one-sentence-per-line dramatic formatting: stacked short lines and pauses that manufacture emotion or suspense.",
+    criteria: {
+      true: "Built from dramatic one-line paragraphs and manufactured pauses.",
+      false: "Uses normal paragraph structure."
+    }
+  },
+  {
+    key: "fake_story",
+    label: "Fabricated story",
+    instructions: "Tells a convenient anecdote with quoted dialogue and a tidy lesson, as if fabricated or polished for virality.",
+    criteria: {
+      true: "Convenient anecdote with quoted dialogue and a tidy, viral-ready lesson.",
+      false: "No convenient anecdote with quoted dialogue and a tidy lesson."
+    }
+  }
+];
+var CLEAN_MAX_SCORE = 2.5;
+var SLOP_MIN_SCORE = 5;
+var SIGNAL_ON_THRESHOLD = 0.5;
+var SCORE_PRECISION = 10;
+var SCORE_RAW_MIN = 0;
+var SCORE_RAW_MAX = SCORE_CRITERIA.length - 1;
+var SCORE_DISPLAY_MAX = 10;
+var SCORE_DISPLAY_FACTOR = SCORE_DISPLAY_MAX / SCORE_RAW_MAX;
+var VERDICT_QUESTION_KEY = "verdict_choice";
+var AMBIGUITY_MARGIN = 0.6;
+var VERDICT_INSTRUCTIONS = "Decide the final verdict for this post: clean (a reader gets real value), borderline (mixed: real substance with promotional or hype framing), or slop (low-value bait a careful reader should skip).";
+var VERDICT_OPTIONS = {
+  clean: "Concrete information or a genuine anecdote, no sales or virality agenda.",
+  borderline: "Real substance mixed with promotion, hype or bait framing.",
+  slop: "Engagement farming, broetry, manufactured hype or generic filler."
+};
+function buildQuestions() {
+  const questions = {
+    [SCORE_QUESTION_KEY]: { type: "score", instructions: SCORE_INSTRUCTIONS, criteria: SCORE_CRITERIA },
+    [VERDICT_QUESTION_KEY]: { type: "choice", instructions: VERDICT_INSTRUCTIONS, criteria: VERDICT_OPTIONS }
+  };
+  for (const definition of SIGNAL_DEFINITIONS) {
+    questions[definition.key] = {
+      type: "noul",
+      instructions: definition.instructions,
+      criteria: definition.criteria
+    };
+  }
+  return questions;
+}
+function isVerdict(value) {
+  return typeof value === "string" && VERDICTS.includes(value);
+}
+function toVerdict(answers) {
+  const rawScore = readScore(answers, SCORE_QUESTION_KEY);
+  const score = roundScore(rawScore * SCORE_DISPLAY_FACTOR);
+  const signals = SIGNAL_DEFINITIONS.map((definition) => {
+    const probability = readProbability(answers, definition.key);
+    return {
+      key: definition.key,
+      label: definition.label,
+      probability,
+      on: probability > SIGNAL_ON_THRESHOLD
+    };
+  });
+  return { score, verdict: resolveVerdict(score, readChoice(answers)), signals };
+}
+function resolveVerdict(score, choice) {
+  if (isNearBoundary(score))
+    return choice;
+  return verdictFor(score);
+}
+function isNearBoundary(score) {
+  const nearClean = Math.abs(score - CLEAN_MAX_SCORE) <= AMBIGUITY_MARGIN;
+  const nearSlop = Math.abs(score - SLOP_MIN_SCORE) <= AMBIGUITY_MARGIN;
+  return nearClean || nearSlop;
+}
+function readChoice(answers) {
+  const answer = answers[VERDICT_QUESTION_KEY];
+  if (!answer || !isVerdict(answer.choice)) {
+    throw new Error(`Jev answer "${VERDICT_QUESTION_KEY}" must contain a valid verdict`);
+  }
+  return answer.choice;
+}
+function readScore(answers, key) {
+  const answer = answers[key];
+  if (!answer || typeof answer.score !== "number" || !Number.isFinite(answer.score)) {
+    throw new Error(`Jev answer "${key}" must contain a finite score`);
+  }
+  if (answer.score < SCORE_RAW_MIN || answer.score > SCORE_RAW_MAX) {
+    throw new Error(`Jev score "${key}" is out of the expected level range`);
+  }
+  return answer.score;
+}
+function readProbability(answers, key) {
+  const answer = answers[key];
+  if (!answer || typeof answer.noul !== "number" || !Number.isFinite(answer.noul)) {
+    throw new Error(`Jev answer "${key}" must contain a finite probability`);
+  }
+  if (answer.noul < SCORE_RAW_MIN || answer.noul > 1) {
+    throw new Error(`Jev probability "${key}" is out of the 0 to 1 range`);
+  }
+  return answer.noul;
+}
+function roundScore(score) {
+  return Math.round(score * SCORE_PRECISION) / SCORE_PRECISION;
+}
+function verdictFor(score) {
+  if (score >= SLOP_MIN_SCORE)
+    return "slop";
+  if (score < CLEAN_MAX_SCORE)
+    return "clean";
+  return "borderline";
+}
+
+// extension/badge.ts
+var STATE_CLASS = {
+  clean: "lnslop-good",
+  borderline: "lnslop-meh",
+  slop: "lnslop-bad"
+};
+var SCORE_DECIMALS = 1;
+function applyPending(chip) {
+  chip.className = "lnslop-chip lnslop-pending";
+  chip.replaceChildren(makeDot(), chipPart("lnslop-word", "Slop"), chipPart("lnslop-num", "…"));
+  chip.setAttribute("aria-label", "Analyzing post for slop");
+  chip.setAttribute("aria-expanded", "false");
+  chip.setAttribute("aria-busy", "true");
+}
+function applyFailure(chip) {
+  chip.className = "lnslop-chip lnslop-error";
+  chip.replaceChildren(makeDot(), chipPart("lnslop-word", "Slop"), chipPart("lnslop-num", "?"));
+  chip.setAttribute("aria-expanded", "false");
+  chip.removeAttribute("aria-busy");
+  chip.setAttribute("aria-label", "Could not classify. Press to retry.");
+}
+function applyVerdict(chip, reply) {
+  const { verdict, score } = reply.verdict;
+  chip.className = `lnslop-chip ${STATE_CLASS[verdict]}`;
+  chip.replaceChildren(makeDot(), chipPart("lnslop-word", "Slop"), chipPart("lnslop-num", score.toFixed(SCORE_DECIMALS)));
+  chip.removeAttribute("aria-busy");
+  chip.setAttribute("aria-label", `Slop ${score.toFixed(SCORE_DECIMALS)} of 10, ${verdict}. View detail.`);
+}
+function makeDot() {
+  const dot = document.createElement("span");
+  dot.className = "lnslop-dot";
+  dot.setAttribute("aria-hidden", "true");
+  return dot;
+}
+function chipPart(className, text) {
+  const node = document.createElement("span");
+  node.className = className;
+  node.textContent = text;
+  return node;
+}
+function buildPopover(reply, onLabel) {
+  const popover = document.createElement("div");
+  popover.className = "lnslop-popover";
+  popover.setAttribute("role", "dialog");
+  popover.setAttribute("aria-label", "Slop analysis");
+  popover.append(buildHeader(reply.verdict), buildReason(reply.verdict), buildTrainRow(onLabel), buildMeta(reply));
+  return popover;
+}
+function buildHeader(slop) {
+  const header = document.createElement("header");
+  header.className = "lnslop-head";
+  const verdict = document.createElement("strong");
+  verdict.className = `lnslop-verdict ${STATE_CLASS[slop.verdict]}`;
+  verdict.append(makeDot(), document.createTextNode(`Slop ${slop.score.toFixed(SCORE_DECIMALS)}/10`));
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "lnslop-close";
+  close.setAttribute("aria-label", "Close");
+  close.textContent = "×";
+  header.append(verdict, close);
+  return header;
+}
+function buildReason(slop) {
+  const reason = document.createElement("p");
+  reason.className = "lnslop-reason";
+  const fired = slop.signals.filter((signal) => signal.on).map((signal) => signal.label);
+  reason.textContent = fired.length > 0 ? `Reads like: ${fired.join(", ")}.` : "No bait signals fired.";
+  return reason;
+}
+function buildMeta(reply) {
+  const meta = document.createElement("p");
+  meta.className = "lnslop-meta";
+  meta.textContent = `${reply.model} · ${reply.trainedOn} examples`;
+  return meta;
+}
+function buildTrainRow(onLabel) {
+  const row = document.createElement("div");
+  row.className = "lnslop-train";
+  const question = document.createElement("span");
+  question.className = "lnslop-train-label";
+  question.textContent = "Was this right?";
+  row.append(question);
+  for (const verdict of VERDICTS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `lnslop-vote lnslop-vote-${verdict}`;
+    button.textContent = verdict;
+    button.addEventListener("click", () => onLabel(verdict));
+    row.append(button);
+  }
+  return row;
+}
+
+// extension/palette.ts
+var LIGHT_SIGNALS = { positive: "#057642", caution: "#915907", negative: "#b24020" };
+var DARK_SIGNALS = { positive: "#7cc9a2", caution: "#d9ab63", negative: "#e08a6e" };
+var TOKEN_NAMES = [
+  ["ink", "--lnslop-ink"],
+  ["inkSoft", "--lnslop-ink-soft"],
+  ["surface", "--lnslop-surface"],
+  ["hairline", "--lnslop-hairline"],
+  ["hairlineSoft", "--lnslop-hairline-soft"],
+  ["hover", "--lnslop-hover"],
+  ["positive", "--lnslop-positive"],
+  ["caution", "--lnslop-caution"],
+  ["negative", "--lnslop-negative"],
+  ["shadow", "--lnslop-shadow"]
+];
+var MAX_CHANNEL = 255;
+var LUMA_RED = 0.2126;
+var LUMA_GREEN = 0.7152;
+var LUMA_BLUE = 0.0722;
+var DARK_THRESHOLD = 0.4;
+var INK_SOFT_PERCENT = 62;
+var HAIRLINE_PERCENT = 15;
+var HAIRLINE_SOFT_PERCENT = 8;
+var HOVER_PERCENT = 8;
+function readHostPalette(anchor) {
+  const ink = getComputedStyle(anchor).color;
+  const surface = findSurface(anchor);
+  const dark = isDark(surface);
+  const signals = dark ? DARK_SIGNALS : LIGHT_SIGNALS;
+  return {
+    ink,
+    inkSoft: mix(ink, INK_SOFT_PERCENT),
+    surface,
+    hairline: mix(ink, HAIRLINE_PERCENT),
+    hairlineSoft: mix(ink, HAIRLINE_SOFT_PERCENT),
+    hover: mix(ink, HOVER_PERCENT),
+    ...signals,
+    shadow: dark ? "0 4px 12px rgba(0, 0, 0, .45)" : "0 4px 12px rgba(0, 0, 0, .15)"
+  };
+}
+function applyPalette(element, palette) {
+  for (const [key, name] of TOKEN_NAMES)
+    element.style.setProperty(name, palette[key]);
+}
+function mix(color, percent) {
+  return `color-mix(in srgb, ${color} ${percent}%, transparent)`;
+}
+function findSurface(element) {
+  let node = element;
+  while (node) {
+    const background = getComputedStyle(node).backgroundColor;
+    if (!isTransparent(background))
+      return background;
+    node = node.parentElement;
+  }
+  return "#fff";
+}
+function isTransparent(color) {
+  return color === "transparent" || color === "rgba(0, 0, 0, 0)";
+}
+function isDark(color) {
+  const channels = (color.match(/[\d.]+/g) ?? []).map((channel) => Number(channel));
+  const [red = MAX_CHANNEL, green = MAX_CHANNEL, blue = MAX_CHANNEL] = channels;
+  const luminance = (LUMA_RED * red + LUMA_GREEN * green + LUMA_BLUE * blue) / MAX_CHANNEL;
+  return luminance < DARK_THRESHOLD;
+}
+
+// extension/protocol.ts
+function isSlopReply(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  const candidate = value;
+  return candidate.ok === true && typeof candidate.model === "string" && typeof candidate.trainedOn === "number" && hasSlopVerdict(candidate.verdict);
+}
+function hasSlopVerdict(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  const candidate = value;
+  return isVerdict(candidate.verdict) && typeof candidate.score === "number" && Array.isArray(candidate.signals);
+}
+
+// extension/content.ts
+var TEXT_ANCHOR_SELECTOR = '[data-testid="expandable-text-box"]';
+var LEGACY_CARD_SELECTOR = '[data-urn^="urn:li:activity"], [data-id^="urn:li:activity"]';
+var LEGACY_TEXT_SELECTORS = [
+  ".update-components-text",
+  ".feed-shared-update-v2__commentary",
+  ".feed-shared-text"
+];
+var SOCIAL_BAR_SELECTOR = 'svg#comment-small, svg#repost-small, svg#thumbs-up-outline-small, [aria-label^="Reaction button state"]';
+var COMMENT_ICON = "svg#comment-small";
+var REPOST_ICON = "svg#repost-small";
+var CHIP_CLASS = "lnslop-chip";
+var HOST_CLASS = "lnslop-host";
+var CARD_MARKER = "lnslopCard";
+var MIN_POST_LENGTH = 40;
+var SCAN_DEBOUNCE_MS = 400;
+var MAX_CONCURRENT = 2;
+var REPLY_TIMEOUT_MS = 35000;
+var MAX_CACHED_VERDICTS = 200;
+var MAX_CARD_WALK = 20;
+var verdicts = new Map;
+var queue = [];
+var inFlight = 0;
+var openPopover = null;
+var openChip = null;
+var scanTimer;
+var lastCardCount = -1;
+function start() {
+  console.info("[lnslop] watching the feed");
+  const observer = new MutationObserver(scheduleScan);
+  observer.observe(document.body, { childList: true, subtree: true });
+  scan();
+}
+function scheduleScan() {
+  clearTimeout(scanTimer);
+  scanTimer = window.setTimeout(scan, SCAN_DEBOUNCE_MS);
+}
+function scan() {
+  const cards = collectCards();
+  if (cards.length !== lastCardCount) {
+    console.info(`[lnslop] ${cards.length} posts found`);
+    lastCardCount = cards.length;
+  }
+  for (const card of cards) {
+    if (card.dataset[CARD_MARKER] && card.querySelector(`.${CHIP_CLASS}`))
+      continue;
+    attach(card);
+  }
+}
+function collectCards() {
+  const cards = [];
+  const seen = new Set;
+  const push = (card) => {
+    if (!card || seen.has(card))
+      return;
+    seen.add(card);
+    cards.push(card);
+  };
+  for (const anchor of document.querySelectorAll(TEXT_ANCHOR_SELECTOR)) {
+    push(closestPostCard(anchor));
+  }
+  for (const legacy of document.querySelectorAll(LEGACY_CARD_SELECTOR)) {
+    push(legacy);
+  }
+  return cards.filter((card) => !hasCardAncestor(card, seen));
+}
+function closestPostCard(anchor) {
+  let node = anchor.parentElement;
+  for (let depth = 0;node && depth < MAX_CARD_WALK; depth += 1) {
+    if (node.querySelector(SOCIAL_BAR_SELECTOR))
+      return realBox(node);
+    node = node.parentElement;
+  }
+  return null;
+}
+function realBox(node) {
+  let current = node;
+  while (current.parentElement && getComputedStyle(current).display === "contents") {
+    current = current.parentElement;
+  }
+  return current;
+}
+function hasCardAncestor(card, cards) {
+  let node = card.parentElement;
+  while (node) {
+    if (cards.has(node))
+      return true;
+    node = node.parentElement;
+  }
+  return false;
+}
+function attach(card) {
+  const text = extractText(card, findCommentaryAnchor(card));
+  if (!text)
+    return;
+  card.dataset[CARD_MARKER] = "1";
+  const chip = createChip(card);
+  chip.dataset.lnslopText = text;
+  const cached = verdicts.get(textKey(text));
+  if (cached) {
+    applyVerdict(chip, cached);
+    return;
+  }
+  queue.push({ chip, text });
+  pump();
+}
+function extractText(card, anchor) {
+  const anchored = anchor ? normalize(readAnchor(anchor)) : "";
+  if (anchored.length >= MIN_POST_LENGTH)
+    return anchored;
+  for (const selector of LEGACY_TEXT_SELECTORS) {
+    const node = card.querySelector(selector);
+    const text = normalize(node?.textContent ?? "");
+    if (text.length >= MIN_POST_LENGTH)
+      return text;
+  }
+  return null;
+}
+function findCommentaryAnchor(card) {
+  const bar = card.querySelector(SOCIAL_BAR_SELECTOR);
+  for (const anchor of card.querySelectorAll(TEXT_ANCHOR_SELECTOR)) {
+    if (!bar)
+      return anchor;
+    if (anchor.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING)
+      return anchor;
+  }
+  return null;
+}
+function readAnchor(anchor) {
+  const clone = anchor.cloneNode(true);
+  for (const button of clone.querySelectorAll("button"))
+    button.remove();
+  return clone.textContent ?? "";
+}
+function normalize(raw) {
+  return raw.replaceAll(/[\u200B\u200C\u200D]/g, "").replace(/\s+/g, " ").trim();
+}
+function createChip(card) {
+  const chip = document.createElement("button");
+  chip.type = "button";
+  applyPending(chip);
+  applyPalette(chip, readHostPalette(findCommentaryAnchor(card) ?? card));
+  chip.addEventListener("click", () => handleChipClick(chip));
+  card.classList.add(HOST_CLASS);
+  const bar = findActionBar(card);
+  if (bar) {
+    bar.append(chip);
+  } else {
+    chip.dataset.lnslopFloating = "true";
+    card.append(chip);
+  }
+  return chip;
+}
+function findActionBar(card) {
+  let node = card.querySelector(COMMENT_ICON)?.parentElement ?? null;
+  while (node && node !== card) {
+    if (node.querySelector(REPOST_ICON))
+      return node;
+    node = node.parentElement;
+  }
+  return null;
+}
+function handleChipClick(chip) {
+  if (chip.dataset.lnslopCode === "no-key" || chip.dataset.lnslopCode === "no-access") {
+    const text = chip.dataset.lnslopText ?? "";
+    delete chip.dataset.lnslopCode;
+    applyPending(chip);
+    queue.push({ chip, text });
+    pump();
+    extensionApi.runtime.sendMessage({ type: "openOptions" });
+    return;
+  }
+  if (chip.classList.contains("lnslop-error")) {
+    applyPending(chip);
+    const text = chip.dataset.lnslopText ?? "";
+    queue.push({ chip, text });
+    pump();
+    return;
+  }
+  togglePopover(chip);
+}
+function togglePopover(chip) {
+  if (openChip === chip) {
+    closePopover(true);
+    return;
+  }
+  closePopover(false);
+  const text = chip.dataset.lnslopText ?? "";
+  const reply = verdicts.get(textKey(text));
+  if (!reply)
+    return;
+  const host = chip.closest(`.${HOST_CLASS}`);
+  if (!host)
+    return;
+  const popover = buildCardPopover(chip, text, reply);
+  host.append(popover);
+  chip.setAttribute("aria-expanded", "true");
+  openPopover = popover;
+  openChip = chip;
+  popover.querySelector(".lnslop-close")?.focus();
+}
+function buildCardPopover(chip, text, reply) {
+  const popover = buildPopover(reply, (label) => {
+    saveLabel(chip, text, label);
+  });
+  const host = chip.closest(`.${HOST_CLASS}`);
+  if (host)
+    applyPalette(popover, readHostPalette(findCommentaryAnchor(host) ?? host));
+  popover.querySelector(".lnslop-close")?.addEventListener("click", () => closePopover(true));
+  return popover;
+}
+function closePopover(refocus) {
+  if (openPopover)
+    openPopover.remove();
+  if (openChip)
+    openChip.setAttribute("aria-expanded", "false");
+  if (refocus && openChip)
+    openChip.focus();
+  openPopover = null;
+  openChip = null;
+}
+async function saveLabel(chip, text, label) {
+  try {
+    await extensionApi.runtime.sendMessage({ type: "label", text, label });
+    verdicts.delete(textKey(text));
+    applyPending(chip);
+    closePopover(false);
+    queue.push({ chip, text });
+    pump();
+  } catch {
+    closePopover(false);
+    chip.dataset.lnslopCode = "request";
+    applyFailure(chip);
+  }
+}
+function pump() {
+  while (inFlight < MAX_CONCURRENT && queue.length > 0) {
+    const task = queue.shift();
+    if (!task)
+      return;
+    inFlight += 1;
+    run(task);
+  }
+}
+async function run(task) {
+  try {
+    const reply = await requestVerdict(task.text);
+    rememberVerdict(textKey(task.text), reply);
+    delete task.chip.dataset.lnslopCode;
+    applyVerdict(task.chip, reply);
+  } catch (error) {
+    task.chip.dataset.lnslopCode = readFailureCode(error);
+    applyFailure(task.chip);
+  } finally {
+    inFlight -= 1;
+    pump();
+  }
+}
+function rememberVerdict(key, reply) {
+  verdicts.set(key, reply);
+  if (verdicts.size <= MAX_CACHED_VERDICTS)
+    return;
+  const oldest = verdicts.keys().next().value;
+  if (oldest !== undefined)
+    verdicts.delete(oldest);
+}
+async function requestVerdict(text) {
+  const request = extensionApi.runtime.sendMessage({ type: "classify", text });
+  const reply = await withTimeout(request, REPLY_TIMEOUT_MS);
+  if (isSlopReply(reply))
+    return reply;
+  if (!reply.ok) {
+    const failure = new Error(reply.error);
+    failure.code = reply.code;
+    throw failure;
+  }
+  throw new Error("Malformed classifier reply");
+}
+function readFailureCode(error) {
+  const code = error.code;
+  return code === "no-key" || code === "no-access" ? code : "request";
+}
+function withTimeout(promise, milliseconds) {
+  let timer = 0;
+  const timeout = new Promise((_, reject) => {
+    timer = window.setTimeout(() => reject(new Error("Classifier timed out")), milliseconds);
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    window.clearTimeout(timer);
+  });
+}
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape")
+    closePopover(true);
+});
+document.addEventListener("click", (event) => {
+  if (!openPopover || !openChip)
+    return;
+  const target = event.target;
+  if (openPopover.contains(target) || openChip.contains(target))
+    return;
+  closePopover(false);
+});
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", start);
+} else {
+  start();
+}
