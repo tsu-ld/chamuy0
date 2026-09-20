@@ -1,9 +1,12 @@
 import type { TrainingExample } from '../core/examples'
+import type { HideSettings } from '../core/hide'
+import { parseHide } from '../core/hide'
 import { isVerdict } from '../core/rubric'
-import { extensionApi } from './api'
+import { extensionApi, onLocalChange } from './api'
 
 const API_KEY_FIELD = 'apiKey'
 const TRAINING_FIELD = 'trainingExamples'
+const HIDE_FIELD = 'hide'
 
 export async function readApiKey(): Promise<string> {
   const stored = await extensionApi.storage.local.get(API_KEY_FIELD)
@@ -32,4 +35,17 @@ function isTrainingExample(entry: unknown): entry is TrainingExample {
 
 export async function writeTraining(pool: TrainingExample[]): Promise<void> {
   await extensionApi.storage.local.set({ [TRAINING_FIELD]: pool })
+}
+
+export async function readHide(): Promise<HideSettings> {
+  const stored = await extensionApi.storage.local.get(HIDE_FIELD)
+  return parseHide(stored[HIDE_FIELD])
+}
+
+export async function writeHide(settings: HideSettings): Promise<void> {
+  await extensionApi.storage.local.set({ [HIDE_FIELD]: settings })
+}
+
+export function onHideChange(listener: (settings: HideSettings) => void): void {
+  onLocalChange(HIDE_FIELD, value => listener(parseHide(value)))
 }

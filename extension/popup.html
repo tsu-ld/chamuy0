@@ -57,6 +57,19 @@
         </form>
       </section>
 
+      <section aria-labelledby="lnslop-hide-h">
+        <h2 id="lnslop-hide-h">Feed cleanup</h2>
+        <form id="hide-form" class="lnslop-field">
+          <div class="lnslop-inline">
+            <input id="hide-enabled" type="checkbox" />
+            <label for="hide-enabled">Hide posts scoring</label>
+            <input id="hide-threshold" type="range" min="0" max="10" step="0.5" />
+            <output id="hide-value" for="hide-threshold">5.0</output>
+          </div>
+          <p id="hide-status" class="lnslop-status" role="status"></p>
+        </form>
+      </section>
+
       <section aria-labelledby="lnslop-train-h">
         <h2 id="lnslop-train-h">Training examples</h2>
         <p class="lnslop-lede">

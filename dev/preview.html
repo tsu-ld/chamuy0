@@ -110,12 +110,23 @@
       }
       .pv-options-wrap { border-radius: 8px; overflow: hidden; }
       .pv-options-wrap .lnslop-options { padding: 24px 16px; }
+      .pv-row { display: flex; gap: 8px; margin: 14px 0 0; }
+      .pv-trigger {
+        padding: 5px 12px;
+        border: 1px solid rgba(0, 0, 0, .25);
+        border-radius: 4px;
+        background: #fff;
+        color: #1c1a17;
+        font: 600 12px/1.4 system-ui, sans-serif;
+        cursor: pointer;
+      }
+      .pv-trigger:hover { background: #f3f2ef; }
     </style>
   </head>
   <body>
     <header class="pv-head">
       <h1>Slop chip — design preview</h1>
-      <p>Static render of extension/badge.css. Popovers are shown open; no JS.</p>
+      <p>Static render of extension/badge.css. Popovers are shown open; a small inline script drives the banish demo.</p>
     </header>
 
     <section class="pv-sec">
@@ -204,6 +215,62 @@
     </section>
 
     <section class="pv-sec">
+      <h2 class="pv-label">Banish — hidden post animation</h2>
+      <div class="pv-grid">
+        <div class="pv-stage">
+          <p class="pv-name">score 8.4 · stamp, lift, collapse</p>
+          <article class="pv-post lnslop-host" data-pv-score="8.4">
+            <header class="pv-posthead">
+              <span class="pv-avatar"></span>
+              <span class="pv-id"><i style="inline-size: 118px"></i><i></i></span>
+            </header>
+            <div class="pv-lines"><i></i><i></i><i></i><i></i><i></i><i style="inline-size: 64%"></i></div>
+            <footer class="pv-actions"><i></i><i></i><i></i><i></i><button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button></footer>
+          </article>
+          <p class="pv-row">
+            <button type="button" class="pv-trigger" data-pv-banish>Banish it</button>
+            <button type="button" class="pv-trigger" data-pv-replay>Reset</button>
+          </p>
+        </div>
+
+        <div class="pv-stage">
+          <p class="pv-name">score 9.6 · severe ring flourish</p>
+          <article class="pv-post lnslop-host" data-pv-score="9.6">
+            <header class="pv-posthead">
+              <span class="pv-avatar"></span>
+              <span class="pv-id"><i style="inline-size: 96px"></i><i></i></span>
+            </header>
+            <div class="pv-lines"><i></i><i></i><i></i><i></i><i style="inline-size: 71%"></i></div>
+            <footer class="pv-actions"><i></i><i></i><i></i><i></i><button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 9.6 of 10, slop. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">9.6</span></button></footer>
+          </article>
+          <p class="pv-row">
+            <button type="button" class="pv-trigger" data-pv-banish>Banish it</button>
+            <button type="button" class="pv-trigger" data-pv-replay>Reset</button>
+          </p>
+        </div>
+
+        <div class="pv-stage lnslop-dark">
+          <article class="pv-post lnslop-host lnslop-hidden">
+            <header class="pv-posthead">
+              <span class="pv-avatar"></span>
+              <span class="pv-id"><i style="inline-size: 122px"></i><i></i></span>
+            </header>
+            <div class="pv-lines"><i></i><i></i><i></i><i style="inline-size: 49%"></i></div>
+            <footer class="pv-actions"><i></i><i></i><i></i><i></i><button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 7.1 of 10, slop. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">7.1</span></button></footer>
+            <div class="lnslop-tomb" aria-label="Post hidden. Slop score 7.1 of 10.">
+              <span class="lnslop-tomb-text">Slop 7.1 · hidden</span>
+              <button type="button" class="lnslop-show">Show</button>
+            </div>
+          </article>
+          <p class="pv-row">
+            <button type="button" class="pv-trigger" data-pv-banish>Banish it</button>
+            <button type="button" class="pv-trigger" data-pv-replay>Reset</button>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="pv-sec">
       <h2 class="pv-label">Settings popup</h2>
       <div class="pv-options-wrap">
         <div class="lnslop-options">
@@ -255,6 +322,19 @@
               </form>
             </section>
 
+            <section aria-labelledby="lnslop-hide-h">
+              <h2 id="lnslop-hide-h">Feed cleanup</h2>
+              <form id="hide-form" class="lnslop-field">
+                <div class="lnslop-inline">
+                  <input id="hide-enabled" type="checkbox" checked />
+                  <label for="hide-enabled">Hide posts scoring</label>
+                  <input id="hide-threshold" type="range" min="0" max="10" step="0.5" value="6.5" />
+                  <output id="hide-value" for="hide-threshold">6.5</output>
+                </div>
+                <p id="hide-status" class="lnslop-status" role="status">Reads like: at or above 6.5, the post collapses to a marker. Show brings it back.</p>
+              </form>
+            </section>
+
             <section aria-labelledby="lnslop-train-h">
               <h2 id="lnslop-train-h">Training examples</h2>
               <p class="lnslop-lede">
@@ -281,5 +361,76 @@
         </div>
       </div>
     </section>
+    <script>
+      const TOMB_HEIGHT = '2.75rem'
+      const FINISH_MS = 460
+      const SEVERE_SCORE = 9
+      const frames = new Map()
+
+      function buildTomb(score, onShow) {
+        const bar = document.createElement('div')
+        bar.className = 'lnslop-tomb'
+        bar.setAttribute('aria-label', `Post hidden. Slop score ${score} of 10.`)
+        const text = document.createElement('span')
+        text.className = 'lnslop-tomb-text'
+        text.textContent = `Slop ${score} · hidden`
+        const show = document.createElement('button')
+        show.type = 'button'
+        show.className = 'lnslop-show'
+        show.textContent = 'Show'
+        show.addEventListener('click', onShow)
+        bar.append(text, show)
+        return bar
+      }
+
+      function banish(card) {
+        if (card.classList.contains('lnslop-banish') || card.classList.contains('lnslop-hidden')) return
+        const score = card.dataset.pvScore
+        card.append(buildTomb(score, () => reveal(card)))
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          card.classList.add('lnslop-hidden')
+          return
+        }
+        card.style.height = `${card.getBoundingClientRect().height}px`
+        card.classList.add('lnslop-banish')
+        if (Number(score) >= SEVERE_SCORE) card.classList.add('lnslop-severe')
+        frames.set(card, requestAnimationFrame(() => {
+          frames.delete(card)
+          card.classList.add('lnslop-fall')
+          card.style.height = TOMB_HEIGHT
+          setTimeout(() => finishBanish(card), FINISH_MS)
+        }))
+      }
+
+      function finishBanish(card) {
+        card.classList.remove('lnslop-banish', 'lnslop-fall', 'lnslop-severe')
+        card.style.height = ''
+        if (!card.querySelector('.lnslop-tomb')) return
+        card.classList.add('lnslop-hidden')
+      }
+
+      function reveal(card) {
+        const frame = frames.get(card)
+        if (frame !== undefined) cancelAnimationFrame(frame)
+        frames.delete(card)
+        card.classList.remove('lnslop-hidden', 'lnslop-banish', 'lnslop-fall', 'lnslop-severe')
+        card.style.height = ''
+        card.querySelector('.lnslop-tomb')?.remove()
+      }
+
+      function demoCard(button) {
+        return button.closest('.pv-stage').querySelector('.pv-post')
+      }
+
+      for (const button of document.querySelectorAll('[data-pv-banish]')) {
+        button.addEventListener('click', () => banish(demoCard(button)))
+      }
+      for (const button of document.querySelectorAll('[data-pv-replay]')) {
+        button.addEventListener('click', () => reveal(demoCard(button)))
+      }
+      for (const show of document.querySelectorAll('.lnslop-hidden .lnslop-show')) {
+        show.addEventListener('click', () => reveal(show.closest('.pv-post')))
+      }
+    </script>
   </body>
 </html>

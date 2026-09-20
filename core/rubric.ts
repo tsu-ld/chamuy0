@@ -130,7 +130,7 @@ const SIGNAL_DEFINITIONS: SignalDefinition[] = [
 ]
 
 const CLEAN_MAX_SCORE = 2.5
-const SLOP_MIN_SCORE = 5
+export const SLOP_MIN_SCORE = 5
 const SIGNAL_ON_THRESHOLD = 0.5
 const SCORE_PRECISION = 10
 const SCORE_RAW_MIN = 0

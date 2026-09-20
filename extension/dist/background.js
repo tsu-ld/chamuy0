@@ -325,10 +325,40 @@ function toJevError(error) {
 var scope = globalThis;
 var extensionApi = scope.browser ?? scope.chrome;
 var isGecko = scope.browser !== undefined;
+function onLocalChange(field, listener) {
+  extensionApi.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local" || !(field in changes))
+      return;
+    listener(changes[field].newValue);
+  });
+}
+
+// core/hide.ts
+var MIN_THRESHOLD = 0;
+var MAX_THRESHOLD = 10;
+function parseHide(value) {
+  if (typeof value !== "object" || value === null) {
+    return { enabled: false, threshold: SLOP_MIN_SCORE };
+  }
+  const candidate = value;
+  return {
+    enabled: Boolean(candidate.enabled),
+    threshold: clampThreshold(candidate.threshold)
+  };
+}
+function clampThreshold(threshold) {
+  if (typeof threshold !== "number" || !Number.isFinite(threshold))
+    return SLOP_MIN_SCORE;
+  return Math.min(MAX_THRESHOLD, Math.max(MIN_THRESHOLD, threshold));
+}
+function shouldHide(score, settings) {
+  return settings.enabled && score >= settings.threshold;
+}
 
 // extension/storage.ts
 var API_KEY_FIELD = "apiKey";
 var TRAINING_FIELD = "trainingExamples";
+var HIDE_FIELD = "hide";
 async function readApiKey() {
   const stored = await extensionApi.storage.local.get(API_KEY_FIELD);
   const value = stored[API_KEY_FIELD];
@@ -352,6 +382,16 @@ function isTrainingExample(entry) {
 }
 async function writeTraining(pool) {
   await extensionApi.storage.local.set({ [TRAINING_FIELD]: pool });
+}
+async function readHide() {
+  const stored = await extensionApi.storage.local.get(HIDE_FIELD);
+  return parseHide(stored[HIDE_FIELD]);
+}
+async function writeHide(settings) {
+  await extensionApi.storage.local.set({ [HIDE_FIELD]: settings });
+}
+function onHideChange(listener) {
+  onLocalChange(HIDE_FIELD, (value) => listener(parseHide(value)));
 }
 
 // extension/background.ts

@@ -1,120 +1,3 @@
-// extension/api.ts
-var scope = globalThis;
-var extensionApi = scope.browser ?? scope.chrome;
-var isGecko = scope.browser !== undefined;
-
-// core/jev.ts
-var DEFAULT_MODEL = "jev-1.13.0";
-var BASE_URL = "https://api.typesafe.ai/v1/systemone";
-var API_ORIGIN = "https://api.typesafe.ai/*";
-var MAX_RETRIES = 2;
-var BACKOFF_MS = 500;
-var JITTER_RATIO = 0.25;
-var TIMEOUT_MS = 1e4;
-var MS_PER_SECOND = 1000;
-var MAX_RETRY_AFTER_MS = 2000;
-var ERROR_EXCERPT_LENGTH = 200;
-var HTTP_REQUEST_TIMEOUT = 408;
-var HTTP_UNPROCESSABLE = 422;
-var HTTP_RATE_LIMIT = 429;
-var HTTP_SERVER_ERROR_FLOOR = 500;
-var NETWORK_FAILURE = 0;
-
-class JevError extends Error {
-  status;
-  retryAfterMs;
-  constructor(message, status, retryAfterMs = 0) {
-    super(message);
-    this.name = "JevError";
-    this.status = status;
-    this.retryAfterMs = retryAfterMs;
-  }
-}
-async function askJev(questions, state, options) {
-  const resolved = { apiKey: options.apiKey, model: options.model ?? DEFAULT_MODEL };
-  async function attempt(retriesLeft) {
-    try {
-      return await postOnce(questions, state, resolved);
-    } catch (error) {
-      const failure = toJevError(error);
-      if (retriesLeft === 0 || !isRetryable(failure.status))
-        throw failure;
-      await pause(failure.retryAfterMs, MAX_RETRIES - retriesLeft);
-      return attempt(retriesLeft - 1);
-    }
-  }
-  return attempt(MAX_RETRIES);
-}
-async function postOnce(questions, state, options) {
-  const response = await fetch(BASE_URL, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${options.apiKey}`,
-      "content-type": "application/json"
-    },
-    body: JSON.stringify({ model: options.model, questions, state }),
-    signal: AbortSignal.timeout(TIMEOUT_MS)
-  });
-  if (!response.ok)
-    throw await responseFailure(response);
-  const payload = await response.json();
-  return readResponse(payload);
-}
-function readResponse(payload) {
-  if (typeof payload !== "object" || payload === null) {
-    throw new JevError("Jev returned a non-object payload", HTTP_UNPROCESSABLE);
-  }
-  const candidate = payload;
-  if (typeof candidate.answers !== "object" || candidate.answers === null) {
-    throw new JevError("Jev payload is missing answers", HTTP_UNPROCESSABLE);
-  }
-  return {
-    answers: candidate.answers,
-    model: typeof candidate.model === "string" ? candidate.model : undefined
-  };
-}
-async function responseFailure(response) {
-  const detail = await response.text();
-  const excerpt = detail.slice(0, ERROR_EXCERPT_LENGTH);
-  return new JevError(`Jev responded ${response.status}: ${excerpt}`, response.status, readRetryAfterMs(response));
-}
-function readRetryAfterMs(response) {
-  const milliseconds = response.headers.get("retry-after-ms");
-  if (milliseconds) {
-    const parsed2 = Number(milliseconds);
-    return Number.isFinite(parsed2) && parsed2 > 0 ? parsed2 : 0;
-  }
-  const seconds = response.headers.get("retry-after");
-  if (!seconds)
-    return 0;
-  const parsed = Number(seconds);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed * MS_PER_SECOND : 0;
-}
-async function pause(retryAfterMs, attemptNumber) {
-  const backoff = BACKOFF_MS * 2 ** attemptNumber;
-  const jitter = BACKOFF_MS * JITTER_RATIO * Math.random();
-  const waitMs = Math.max(Math.min(retryAfterMs, MAX_RETRY_AFTER_MS), backoff + jitter);
-  await new Promise((resolve) => {
-    setTimeout(resolve, waitMs);
-  });
-}
-function isRetryable(status) {
-  if (status === NETWORK_FAILURE || status === HTTP_REQUEST_TIMEOUT || status === HTTP_RATE_LIMIT) {
-    return true;
-  }
-  return status >= HTTP_SERVER_ERROR_FLOOR;
-}
-function toJevError(error) {
-  if (error instanceof JevError)
-    return error;
-  const message = error instanceof Error ? error.message : "Jev request failed";
-  return new JevError(message, NETWORK_FAILURE);
-}
-
-// extension/origins.ts
-var LINKEDIN_ORIGIN = "https://www.linkedin.com/*";
-var ACCESS_ORIGINS = [LINKEDIN_ORIGIN, API_ORIGIN];
-
 // core/rubric.ts
 var SCORE_QUESTION_KEY = "slop_score";
 var VERDICTS = ["clean", "borderline", "slop"];
@@ -282,9 +165,156 @@ function verdictFor(score) {
   return "borderline";
 }
 
+// core/hide.ts
+var MIN_THRESHOLD = 0;
+var MAX_THRESHOLD = 10;
+function parseHide(value) {
+  if (typeof value !== "object" || value === null) {
+    return { enabled: false, threshold: SLOP_MIN_SCORE };
+  }
+  const candidate = value;
+  return {
+    enabled: Boolean(candidate.enabled),
+    threshold: clampThreshold(candidate.threshold)
+  };
+}
+function clampThreshold(threshold) {
+  if (typeof threshold !== "number" || !Number.isFinite(threshold))
+    return SLOP_MIN_SCORE;
+  return Math.min(MAX_THRESHOLD, Math.max(MIN_THRESHOLD, threshold));
+}
+function shouldHide(score, settings) {
+  return settings.enabled && score >= settings.threshold;
+}
+
+// extension/api.ts
+var scope = globalThis;
+var extensionApi = scope.browser ?? scope.chrome;
+var isGecko = scope.browser !== undefined;
+function onLocalChange(field, listener) {
+  extensionApi.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local" || !(field in changes))
+      return;
+    listener(changes[field].newValue);
+  });
+}
+
+// core/jev.ts
+var DEFAULT_MODEL = "jev-1.13.0";
+var BASE_URL = "https://api.typesafe.ai/v1/systemone";
+var API_ORIGIN = "https://api.typesafe.ai/*";
+var MAX_RETRIES = 2;
+var BACKOFF_MS = 500;
+var JITTER_RATIO = 0.25;
+var TIMEOUT_MS = 1e4;
+var MS_PER_SECOND = 1000;
+var MAX_RETRY_AFTER_MS = 2000;
+var ERROR_EXCERPT_LENGTH = 200;
+var HTTP_REQUEST_TIMEOUT = 408;
+var HTTP_UNPROCESSABLE = 422;
+var HTTP_RATE_LIMIT = 429;
+var HTTP_SERVER_ERROR_FLOOR = 500;
+var NETWORK_FAILURE = 0;
+
+class JevError extends Error {
+  status;
+  retryAfterMs;
+  constructor(message, status, retryAfterMs = 0) {
+    super(message);
+    this.name = "JevError";
+    this.status = status;
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+async function askJev(questions, state, options) {
+  const resolved = { apiKey: options.apiKey, model: options.model ?? DEFAULT_MODEL };
+  async function attempt(retriesLeft) {
+    try {
+      return await postOnce(questions, state, resolved);
+    } catch (error) {
+      const failure = toJevError(error);
+      if (retriesLeft === 0 || !isRetryable(failure.status))
+        throw failure;
+      await pause(failure.retryAfterMs, MAX_RETRIES - retriesLeft);
+      return attempt(retriesLeft - 1);
+    }
+  }
+  return attempt(MAX_RETRIES);
+}
+async function postOnce(questions, state, options) {
+  const response = await fetch(BASE_URL, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${options.apiKey}`,
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({ model: options.model, questions, state }),
+    signal: AbortSignal.timeout(TIMEOUT_MS)
+  });
+  if (!response.ok)
+    throw await responseFailure(response);
+  const payload = await response.json();
+  return readResponse(payload);
+}
+function readResponse(payload) {
+  if (typeof payload !== "object" || payload === null) {
+    throw new JevError("Jev returned a non-object payload", HTTP_UNPROCESSABLE);
+  }
+  const candidate = payload;
+  if (typeof candidate.answers !== "object" || candidate.answers === null) {
+    throw new JevError("Jev payload is missing answers", HTTP_UNPROCESSABLE);
+  }
+  return {
+    answers: candidate.answers,
+    model: typeof candidate.model === "string" ? candidate.model : undefined
+  };
+}
+async function responseFailure(response) {
+  const detail = await response.text();
+  const excerpt = detail.slice(0, ERROR_EXCERPT_LENGTH);
+  return new JevError(`Jev responded ${response.status}: ${excerpt}`, response.status, readRetryAfterMs(response));
+}
+function readRetryAfterMs(response) {
+  const milliseconds = response.headers.get("retry-after-ms");
+  if (milliseconds) {
+    const parsed2 = Number(milliseconds);
+    return Number.isFinite(parsed2) && parsed2 > 0 ? parsed2 : 0;
+  }
+  const seconds = response.headers.get("retry-after");
+  if (!seconds)
+    return 0;
+  const parsed = Number(seconds);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed * MS_PER_SECOND : 0;
+}
+async function pause(retryAfterMs, attemptNumber) {
+  const backoff = BACKOFF_MS * 2 ** attemptNumber;
+  const jitter = BACKOFF_MS * JITTER_RATIO * Math.random();
+  const waitMs = Math.max(Math.min(retryAfterMs, MAX_RETRY_AFTER_MS), backoff + jitter);
+  await new Promise((resolve) => {
+    setTimeout(resolve, waitMs);
+  });
+}
+function isRetryable(status) {
+  if (status === NETWORK_FAILURE || status === HTTP_REQUEST_TIMEOUT || status === HTTP_RATE_LIMIT) {
+    return true;
+  }
+  return status >= HTTP_SERVER_ERROR_FLOOR;
+}
+function toJevError(error) {
+  if (error instanceof JevError)
+    return error;
+  const message = error instanceof Error ? error.message : "Jev request failed";
+  return new JevError(message, NETWORK_FAILURE);
+}
+
+// extension/origins.ts
+var LINKEDIN_ORIGIN = "https://www.linkedin.com/*";
+var ACCESS_ORIGINS = [LINKEDIN_ORIGIN, API_ORIGIN];
+
 // extension/storage.ts
 var API_KEY_FIELD = "apiKey";
 var TRAINING_FIELD = "trainingExamples";
+var HIDE_FIELD = "hide";
 async function readApiKey() {
   const stored = await extensionApi.storage.local.get(API_KEY_FIELD);
   const value = stored[API_KEY_FIELD];
@@ -309,10 +339,21 @@ function isTrainingExample(entry) {
 async function writeTraining(pool) {
   await extensionApi.storage.local.set({ [TRAINING_FIELD]: pool });
 }
+async function readHide() {
+  const stored = await extensionApi.storage.local.get(HIDE_FIELD);
+  return parseHide(stored[HIDE_FIELD]);
+}
+async function writeHide(settings) {
+  await extensionApi.storage.local.set({ [HIDE_FIELD]: settings });
+}
+function onHideChange(listener) {
+  onLocalChange(HIDE_FIELD, (value) => listener(parseHide(value)));
+}
 
 // extension/popup.ts
 var EXCERPT_LIMIT = 140;
 var SHOWN_LIMIT = 4;
+var SCORE_DECIMALS = 1;
 var keyInput = mustFind("#api-key");
 var keyForm = mustFind("#key-form");
 var keyStatus = mustFind("#key-status");
@@ -321,8 +362,13 @@ var accessStatus = mustFind("#access-status");
 var accessManual = mustFind("#access-manual");
 var trainingCount = mustFind("#training-count");
 var trainingList = mustFind("#training-list");
+var hideEnabled = mustFind("#hide-enabled");
+var hideThreshold = mustFind("#hide-threshold");
+var hideValue = mustFind("#hide-value");
+var hideStatus = mustFind("#hide-status");
 async function start() {
   keyInput.value = await readApiKey();
+  renderHide(await readHide());
   await refreshAccess();
   await renderTraining();
   accessButton.addEventListener("click", () => {
@@ -331,6 +377,15 @@ async function start() {
   keyForm.addEventListener("submit", (event) => {
     event.preventDefault();
     saveKey();
+  });
+  hideEnabled.addEventListener("change", () => {
+    saveHide();
+  });
+  hideThreshold.addEventListener("input", () => {
+    renderHide(readHideForm());
+  });
+  hideThreshold.addEventListener("change", () => {
+    saveHide();
   });
   extensionApi.permissions.onAdded.addListener(() => {
     refreshAccess();
@@ -367,6 +422,20 @@ async function saveKey() {
   await writeApiKey(apiKey);
   const granted = await extensionApi.permissions.contains({ origins: ACCESS_ORIGINS });
   keyStatus.textContent = granted ? "Saved. Open or reload linkedin.com to classify with it." : "Saved. Grant access in step 1, then open linkedin.com.";
+}
+function readHideForm() {
+  return { enabled: hideEnabled.checked, threshold: Number(hideThreshold.value) };
+}
+function renderHide(settings) {
+  hideEnabled.checked = settings.enabled;
+  hideThreshold.value = String(settings.threshold);
+  hideValue.value = settings.threshold.toFixed(SCORE_DECIMALS);
+  hideStatus.textContent = settings.enabled ? `Reads like: at or above ${settings.threshold.toFixed(SCORE_DECIMALS)}, the post collapses to a marker. Show brings it back.` : "Reads like: off. Every post stays in the feed.";
+}
+async function saveHide() {
+  const settings = readHideForm();
+  await writeHide(settings);
+  renderHide(parseHide(settings));
 }
 async function renderTraining() {
   const pool = await readTraining();

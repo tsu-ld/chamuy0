@@ -13,11 +13,6 @@ function textKey(text) {
   return `${hashText(text)}:${text.length}`;
 }
 
-// extension/api.ts
-var scope = globalThis;
-var extensionApi = scope.browser ?? scope.chrome;
-var isGecko = scope.browser !== undefined;
-
 // core/rubric.ts
 var SCORE_QUESTION_KEY = "slop_score";
 var VERDICTS = ["clean", "borderline", "slop"];
@@ -185,6 +180,40 @@ function verdictFor(score) {
   return "borderline";
 }
 
+// core/hide.ts
+var MIN_THRESHOLD = 0;
+var MAX_THRESHOLD = 10;
+function parseHide(value) {
+  if (typeof value !== "object" || value === null) {
+    return { enabled: false, threshold: SLOP_MIN_SCORE };
+  }
+  const candidate = value;
+  return {
+    enabled: Boolean(candidate.enabled),
+    threshold: clampThreshold(candidate.threshold)
+  };
+}
+function clampThreshold(threshold) {
+  if (typeof threshold !== "number" || !Number.isFinite(threshold))
+    return SLOP_MIN_SCORE;
+  return Math.min(MAX_THRESHOLD, Math.max(MIN_THRESHOLD, threshold));
+}
+function shouldHide(score, settings) {
+  return settings.enabled && score >= settings.threshold;
+}
+
+// extension/api.ts
+var scope = globalThis;
+var extensionApi = scope.browser ?? scope.chrome;
+var isGecko = scope.browser !== undefined;
+function onLocalChange(field, listener) {
+  extensionApi.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local" || !(field in changes))
+      return;
+    listener(changes[field].newValue);
+  });
+}
+
 // extension/badge.ts
 var STATE_CLASS = {
   clean: "lnslop-good",
@@ -278,6 +307,244 @@ function buildTrainRow(onLabel) {
   return row;
 }
 
+// extension/protocol.ts
+function isSlopReply(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  const candidate = value;
+  return candidate.ok === true && typeof candidate.model === "string" && typeof candidate.trainedOn === "number" && hasSlopVerdict(candidate.verdict);
+}
+function hasSlopVerdict(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  const candidate = value;
+  return isVerdict(candidate.verdict) && typeof candidate.score === "number" && Array.isArray(candidate.signals);
+}
+
+// extension/classify.ts
+var REPLY_TIMEOUT_MS = 35000;
+async function requestVerdict(text) {
+  const request = extensionApi.runtime.sendMessage({ type: "classify", text });
+  const reply = await withTimeout(request, REPLY_TIMEOUT_MS);
+  if (isSlopReply(reply))
+    return reply;
+  if (!reply.ok) {
+    const failure = new Error(reply.error);
+    failure.code = reply.code;
+    throw failure;
+  }
+  throw new Error("Malformed classifier reply");
+}
+function readFailureCode(error) {
+  const code = error.code;
+  return code === "no-key" || code === "no-access" ? code : "request";
+}
+function withTimeout(promise, milliseconds) {
+  let timer = 0;
+  const timeout = new Promise((_, reject) => {
+    timer = window.setTimeout(() => reject(new Error("Classifier timed out")), milliseconds);
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    window.clearTimeout(timer);
+  });
+}
+
+// extension/hide.ts
+var CARD_CLASS = "lnslop-host";
+var CHIP_CLASS = "lnslop-chip";
+var HIDDEN_CLASS = "lnslop-hidden";
+var BANISH_CLASS = "lnslop-banish";
+var FALL_CLASS = "lnslop-fall";
+var SEVERE_CLASS = "lnslop-severe";
+var TOMB_CLASS = "lnslop-tomb";
+var TEXT_CLASS = "lnslop-tomb-text";
+var SHOW_CLASS = "lnslop-show";
+var LIVE_CLASS = "lnslop-live";
+var TOMB_SELECTOR = `.${TOMB_CLASS}`;
+var TOMB_HEIGHT = "2.75rem";
+var SCORE_DECIMALS2 = 1;
+var SEVERE_SCORE = 9;
+var FINISH_MS = 460;
+var MAX_TRACKED_KEYS = 400;
+
+class HideDeck {
+  hidden = new Set;
+  revealed = new Set;
+  timers = new Map;
+  frames = new Map;
+  announcer = null;
+  note(chip, reply, settings) {
+    const card = chip.closest(`.${CARD_CLASS}`);
+    if (!card)
+      return;
+    const key = textKey(chip.dataset.lnslopText ?? "");
+    card.dataset.lnslopScore = String(reply.verdict.score);
+    card.dataset.lnslopKey = key;
+    if (!shouldHide(reply.verdict.score, settings))
+      return;
+    this.apply(card, key, reply.verdict.score);
+  }
+  sync(root, settings) {
+    for (const card of root.querySelectorAll(`.${CARD_CLASS}[data-lnslop-key]`)) {
+      this.reconcile(card, settings);
+    }
+  }
+  reconcile(card, settings) {
+    const key = card.dataset.lnslopKey;
+    if (!key)
+      return;
+    const score = Number(card.dataset.lnslopScore);
+    if (Number.isFinite(score) && shouldHide(score, settings)) {
+      this.apply(card, key, score);
+      return;
+    }
+    this.restore(card, key);
+  }
+  apply(card, key, score) {
+    if (this.revealed.has(key))
+      return;
+    const tomb = card.querySelector(TOMB_SELECTOR);
+    if (this.hidden.has(key) && tomb !== null)
+      return;
+    const fresh = !this.hidden.has(key);
+    remember(this.hidden, key);
+    const bar = tomb ?? buildTomb(card.ownerDocument, score, () => this.reveal(card, key));
+    if (tomb === null)
+      card.append(bar);
+    if (fresh && score >= SEVERE_SCORE)
+      card.classList.add(SEVERE_CLASS);
+    this.place(card, bar, fresh);
+    if (fresh)
+      this.announce(card, `Post hidden. Slop score ${score.toFixed(SCORE_DECIMALS2)} of 10.`);
+  }
+  reveal(card, key) {
+    this.hidden.delete(key);
+    remember(this.revealed, key);
+    this.clear(card);
+    card.querySelector(TOMB_SELECTOR)?.remove();
+    card.querySelector(`.${CHIP_CLASS}`)?.focus();
+    this.announce(card, "Post restored.");
+  }
+  restore(card, key) {
+    if (!this.hidden.has(key))
+      return;
+    this.hidden.delete(key);
+    const focus = tombHasFocus(card);
+    this.clear(card);
+    card.querySelector(TOMB_SELECTOR)?.remove();
+    if (focus)
+      card.querySelector(`.${CHIP_CLASS}`)?.focus();
+  }
+  clear(card) {
+    const frame = this.frames.get(card);
+    if (frame !== undefined)
+      cancelAnimationFrame(frame);
+    this.frames.delete(card);
+    const timer = this.timers.get(card);
+    if (timer !== undefined)
+      window.clearTimeout(timer);
+    this.timers.delete(card);
+    card.classList.remove(HIDDEN_CLASS, BANISH_CLASS, FALL_CLASS, SEVERE_CLASS);
+    card.style.height = "";
+  }
+  place(card, bar, fresh) {
+    const plan = planHide(card);
+    if (fresh && plan.animated) {
+      this.placeAnimated(card, bar, plan.focus);
+      return;
+    }
+    this.placeInstant(card, bar, plan.focus);
+  }
+  placeInstant(card, bar, focus) {
+    card.classList.add(HIDDEN_CLASS);
+    if (focus)
+      focusShow(bar);
+  }
+  placeAnimated(card, bar, focus) {
+    card.style.height = `${card.getBoundingClientRect().height}px`;
+    card.classList.add(BANISH_CLASS);
+    this.frames.set(card, requestAnimationFrame(() => {
+      this.frames.delete(card);
+      card.classList.add(FALL_CLASS);
+      card.style.height = TOMB_HEIGHT;
+      this.timers.set(card, window.setTimeout(() => this.finishCollapse(card, bar, focus), FINISH_MS));
+    }));
+  }
+  finishCollapse(card, bar, focus) {
+    this.timers.delete(card);
+    card.classList.remove(BANISH_CLASS, FALL_CLASS, SEVERE_CLASS);
+    card.style.height = "";
+    if (!bar.isConnected)
+      return;
+    card.classList.add(HIDDEN_CLASS);
+    if (focus)
+      focusShow(bar);
+  }
+  announce(card, message) {
+    if (!this.announcer)
+      this.announcer = createAnnouncer(card.ownerDocument);
+    const region = this.announcer;
+    region.textContent = "";
+    requestAnimationFrame(() => {
+      region.textContent = message;
+    });
+  }
+}
+function planHide(card) {
+  const rect = card.getBoundingClientRect();
+  const focus = hasFocusWithin(card);
+  if (prefersReducedMotion())
+    return { animated: false, focus };
+  const viewport = card.ownerDocument.defaultView?.innerHeight ?? 0;
+  return { animated: rect.top < viewport && rect.bottom > 0, focus };
+}
+function prefersReducedMotion() {
+  return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+function hasFocusWithin(card) {
+  const active = card.ownerDocument.activeElement;
+  return active !== null && card.contains(active);
+}
+function tombHasFocus(card) {
+  const tomb = card.querySelector(TOMB_SELECTOR);
+  const active = card.ownerDocument.activeElement;
+  return tomb !== null && active !== null && tomb.contains(active);
+}
+function remember(set, key) {
+  set.add(key);
+  if (set.size <= MAX_TRACKED_KEYS)
+    return;
+  const oldest = set.keys().next().value;
+  if (oldest !== undefined)
+    set.delete(oldest);
+}
+function focusShow(bar) {
+  bar.querySelector(`.${SHOW_CLASS}`)?.focus();
+}
+function buildTomb(doc, score, onShow) {
+  const bar = doc.createElement("div");
+  bar.className = TOMB_CLASS;
+  bar.setAttribute("role", "group");
+  bar.setAttribute("aria-label", `Post hidden. Slop score ${score.toFixed(SCORE_DECIMALS2)} of 10.`);
+  const text = doc.createElement("span");
+  text.className = TEXT_CLASS;
+  text.textContent = `Slop ${score.toFixed(SCORE_DECIMALS2)} · hidden`;
+  const show = doc.createElement("button");
+  show.type = "button";
+  show.className = SHOW_CLASS;
+  show.textContent = "Show";
+  show.addEventListener("click", onShow);
+  bar.append(text, show);
+  return bar;
+}
+function createAnnouncer(doc) {
+  const region = doc.createElement("div");
+  region.className = LIVE_CLASS;
+  region.setAttribute("aria-live", "polite");
+  doc.body.append(region);
+  return region;
+}
+
 // extension/palette.ts
 var LIGHT_SIGNALS = { positive: "#057642", caution: "#915907", negative: "#b24020" };
 var DARK_SIGNALS = { positive: "#7cc9a2", caution: "#d9ab63", negative: "#e08a6e" };
@@ -345,18 +612,43 @@ function isDark(color) {
   return luminance < DARK_THRESHOLD;
 }
 
-// extension/protocol.ts
-function isSlopReply(value) {
-  if (typeof value !== "object" || value === null)
-    return false;
-  const candidate = value;
-  return candidate.ok === true && typeof candidate.model === "string" && typeof candidate.trainedOn === "number" && hasSlopVerdict(candidate.verdict);
+// extension/storage.ts
+var API_KEY_FIELD = "apiKey";
+var TRAINING_FIELD = "trainingExamples";
+var HIDE_FIELD = "hide";
+async function readApiKey() {
+  const stored = await extensionApi.storage.local.get(API_KEY_FIELD);
+  const value = stored[API_KEY_FIELD];
+  return typeof value === "string" ? value : "";
 }
-function hasSlopVerdict(value) {
-  if (typeof value !== "object" || value === null)
+async function writeApiKey(apiKey) {
+  await extensionApi.storage.local.set({ [API_KEY_FIELD]: apiKey });
+}
+async function readTraining() {
+  const stored = await extensionApi.storage.local.get(TRAINING_FIELD);
+  const value = stored[TRAINING_FIELD];
+  if (!Array.isArray(value))
+    return [];
+  return value.filter(isTrainingExample);
+}
+function isTrainingExample(entry) {
+  if (typeof entry !== "object" || entry === null)
     return false;
-  const candidate = value;
-  return isVerdict(candidate.verdict) && typeof candidate.score === "number" && Array.isArray(candidate.signals);
+  const candidate = entry;
+  return typeof candidate.id === "string" && typeof candidate.text === "string" && isVerdict(candidate.label);
+}
+async function writeTraining(pool) {
+  await extensionApi.storage.local.set({ [TRAINING_FIELD]: pool });
+}
+async function readHide() {
+  const stored = await extensionApi.storage.local.get(HIDE_FIELD);
+  return parseHide(stored[HIDE_FIELD]);
+}
+async function writeHide(settings) {
+  await extensionApi.storage.local.set({ [HIDE_FIELD]: settings });
+}
+function onHideChange(listener) {
+  onLocalChange(HIDE_FIELD, (value) => listener(parseHide(value)));
 }
 
 // extension/content.ts
@@ -370,24 +662,30 @@ var LEGACY_TEXT_SELECTORS = [
 var SOCIAL_BAR_SELECTOR = 'svg#comment-small, svg#repost-small, svg#thumbs-up-outline-small, [aria-label^="Reaction button state"]';
 var COMMENT_ICON = "svg#comment-small";
 var REPOST_ICON = "svg#repost-small";
-var CHIP_CLASS = "lnslop-chip";
+var CHIP_CLASS2 = "lnslop-chip";
 var HOST_CLASS = "lnslop-host";
 var CARD_MARKER = "lnslopCard";
 var MIN_POST_LENGTH = 40;
 var SCAN_DEBOUNCE_MS = 400;
 var MAX_CONCURRENT = 2;
-var REPLY_TIMEOUT_MS = 35000;
 var MAX_CACHED_VERDICTS = 200;
 var MAX_CARD_WALK = 20;
 var verdicts = new Map;
+var deck = new HideDeck;
 var queue = [];
 var inFlight = 0;
 var openPopover = null;
 var openChip = null;
 var scanTimer;
 var lastCardCount = -1;
-function start() {
+var hideSettings = parseHide(null);
+async function start() {
   console.info("[lnslop] watching the feed");
+  hideSettings = await readHide();
+  onHideChange((next) => {
+    hideSettings = next;
+    deck.sync(document, next);
+  });
   const observer = new MutationObserver(scheduleScan);
   observer.observe(document.body, { childList: true, subtree: true });
   scan();
@@ -403,7 +701,7 @@ function scan() {
     lastCardCount = cards.length;
   }
   for (const card of cards) {
-    if (card.dataset[CARD_MARKER] && card.querySelector(`.${CHIP_CLASS}`))
+    if (card.dataset[CARD_MARKER] && card.querySelector(`.${CHIP_CLASS2}`))
       continue;
     attach(card);
   }
@@ -460,6 +758,7 @@ function attach(card) {
   const cached = verdicts.get(textKey(text));
   if (cached) {
     applyVerdict(chip, cached);
+    deck.note(chip, cached, hideSettings);
     return;
   }
   queue.push({ chip, text });
@@ -609,6 +908,7 @@ async function run(task) {
     rememberVerdict(textKey(task.text), reply);
     delete task.chip.dataset.lnslopCode;
     applyVerdict(task.chip, reply);
+    deck.note(task.chip, reply, hideSettings);
   } catch (error) {
     task.chip.dataset.lnslopCode = readFailureCode(error);
     applyFailure(task.chip);
@@ -625,31 +925,6 @@ function rememberVerdict(key, reply) {
   if (oldest !== undefined)
     verdicts.delete(oldest);
 }
-async function requestVerdict(text) {
-  const request = extensionApi.runtime.sendMessage({ type: "classify", text });
-  const reply = await withTimeout(request, REPLY_TIMEOUT_MS);
-  if (isSlopReply(reply))
-    return reply;
-  if (!reply.ok) {
-    const failure = new Error(reply.error);
-    failure.code = reply.code;
-    throw failure;
-  }
-  throw new Error("Malformed classifier reply");
-}
-function readFailureCode(error) {
-  const code = error.code;
-  return code === "no-key" || code === "no-access" ? code : "request";
-}
-function withTimeout(promise, milliseconds) {
-  let timer = 0;
-  const timeout = new Promise((_, reject) => {
-    timer = window.setTimeout(() => reject(new Error("Classifier timed out")), milliseconds);
-  });
-  return Promise.race([promise, timeout]).finally(() => {
-    window.clearTimeout(timer);
-  });
-}
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape")
     closePopover(true);
@@ -662,8 +937,7 @@ document.addEventListener("click", (event) => {
     return;
   closePopover(false);
 });
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", start);
-} else {
+if (document.readyState === "loading")
+  document.addEventListener("DOMContentLoaded", () => void start());
+else
   start();
-}

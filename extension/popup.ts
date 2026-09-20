@@ -1,10 +1,13 @@
 import type { TrainingExample } from '../core/examples'
+import type { HideSettings } from '../core/hide'
+import { parseHide } from '../core/hide'
 import { extensionApi, isGecko } from './api'
 import { ACCESS_ORIGINS } from './origins'
-import { readApiKey, readTraining, writeApiKey } from './storage'
+import { readApiKey, readHide, readTraining, writeApiKey, writeHide } from './storage'
 
 const EXCERPT_LIMIT = 140
 const SHOWN_LIMIT = 4
+const SCORE_DECIMALS = 1
 
 const keyInput = mustFind<HTMLInputElement>('#api-key')
 const keyForm = mustFind<HTMLFormElement>('#key-form')
@@ -14,9 +17,14 @@ const accessStatus = mustFind<HTMLElement>('#access-status')
 const accessManual = mustFind<HTMLElement>('#access-manual')
 const trainingCount = mustFind<HTMLElement>('#training-count')
 const trainingList = mustFind<HTMLUListElement>('#training-list')
+const hideEnabled = mustFind<HTMLInputElement>('#hide-enabled')
+const hideThreshold = mustFind<HTMLInputElement>('#hide-threshold')
+const hideValue = mustFind<HTMLOutputElement>('#hide-value')
+const hideStatus = mustFind<HTMLElement>('#hide-status')
 
 async function start(): Promise<void> {
   keyInput.value = await readApiKey()
+  renderHide(await readHide())
   await refreshAccess()
   await renderTraining()
   accessButton.addEventListener('click', () => {
@@ -25,6 +33,15 @@ async function start(): Promise<void> {
   keyForm.addEventListener('submit', (event) => {
     event.preventDefault()
     void saveKey()
+  })
+  hideEnabled.addEventListener('change', () => {
+    void saveHide()
+  })
+  hideThreshold.addEventListener('input', () => {
+    renderHide(readHideForm())
+  })
+  hideThreshold.addEventListener('change', () => {
+    void saveHide()
   })
   extensionApi.permissions.onAdded.addListener(() => {
     void refreshAccess()
@@ -68,6 +85,25 @@ async function saveKey(): Promise<void> {
   keyStatus.textContent = granted
     ? 'Saved. Open or reload linkedin.com to classify with it.'
     : 'Saved. Grant access in step 1, then open linkedin.com.'
+}
+
+function readHideForm(): HideSettings {
+  return { enabled: hideEnabled.checked, threshold: Number(hideThreshold.value) }
+}
+
+function renderHide(settings: HideSettings): void {
+  hideEnabled.checked = settings.enabled
+  hideThreshold.value = String(settings.threshold)
+  hideValue.value = settings.threshold.toFixed(SCORE_DECIMALS)
+  hideStatus.textContent = settings.enabled
+    ? `Reads like: at or above ${settings.threshold.toFixed(SCORE_DECIMALS)}, the post collapses to a marker. Show brings it back.`
+    : 'Reads like: off. Every post stays in the feed.'
+}
+
+async function saveHide(): Promise<void> {
+  const settings = readHideForm()
+  await writeHide(settings)
+  renderHide(parseHide(settings))
 }
 
 async function renderTraining(): Promise<void> {

@@ -1,10 +1,13 @@
 import type { Verdict } from '../core/rubric'
-import type { ClassifyReply, SlopReply } from './protocol'
+import type { SlopReply } from './protocol'
 import { textKey } from '../core/hash'
+import { parseHide } from '../core/hide'
 import { extensionApi } from './api'
 import { applyFailure, applyPending, applyVerdict, buildPopover } from './badge'
+import { readFailureCode, requestVerdict } from './classify'
+import { HideDeck } from './hide'
 import { applyPalette, readHostPalette } from './palette'
-import { isSlopReply } from './protocol'
+import { onHideChange, readHide } from './storage'
 
 const TEXT_ANCHOR_SELECTOR = '[data-testid="expandable-text-box"]'
 const LEGACY_CARD_SELECTOR = '[data-urn^="urn:li:activity"], [data-id^="urn:li:activity"]'
@@ -22,7 +25,6 @@ const CARD_MARKER = 'lnslopCard'
 const MIN_POST_LENGTH = 40
 const SCAN_DEBOUNCE_MS = 400
 const MAX_CONCURRENT = 2
-const REPLY_TIMEOUT_MS = 35000
 const MAX_CACHED_VERDICTS = 200
 const MAX_CARD_WALK = 20
 
@@ -31,20 +33,23 @@ interface Task {
   text: string
 }
 
-interface ReplyFailure extends Error {
-  code: 'no-key' | 'no-access' | 'request'
-}
-
 const verdicts = new Map<string, SlopReply>()
+const deck = new HideDeck()
 const queue: Task[] = []
 let inFlight = 0
 let openPopover: HTMLElement | null = null
 let openChip: HTMLButtonElement | null = null
 let scanTimer: number | undefined
 let lastCardCount = -1
+let hideSettings = parseHide(null)
 
-function start(): void {
+async function start(): Promise<void> {
   console.info('[lnslop] watching the feed')
+  hideSettings = await readHide()
+  onHideChange((next) => {
+    hideSettings = next
+    deck.sync(document, next)
+  })
   const observer = new MutationObserver(scheduleScan)
   observer.observe(document.body, { childList: true, subtree: true })
   scan()
@@ -119,6 +124,7 @@ function attach(card: HTMLElement): void {
   const cached = verdicts.get(textKey(text))
   if (cached) {
     applyVerdict(chip, cached)
+    deck.note(chip, cached, hideSettings)
     return
   }
   queue.push({ chip, text })
@@ -268,6 +274,7 @@ async function run(task: Task): Promise<void> {
     rememberVerdict(textKey(task.text), reply)
     delete task.chip.dataset.lnslopCode
     applyVerdict(task.chip, reply)
+    deck.note(task.chip, reply, hideSettings)
   } catch (error) {
     task.chip.dataset.lnslopCode = readFailureCode(error)
     applyFailure(task.chip)
@@ -284,33 +291,6 @@ function rememberVerdict(key: string, reply: SlopReply): void {
   if (oldest !== undefined) verdicts.delete(oldest)
 }
 
-async function requestVerdict(text: string): Promise<SlopReply> {
-  const request = extensionApi.runtime.sendMessage({ type: 'classify', text }) as Promise<ClassifyReply>
-  const reply = await withTimeout(request, REPLY_TIMEOUT_MS)
-  if (isSlopReply(reply)) return reply
-  if (!reply.ok) {
-    const failure = new Error(reply.error) as ReplyFailure
-    failure.code = reply.code
-    throw failure
-  }
-  throw new Error('Malformed classifier reply')
-}
-
-function readFailureCode(error: unknown): 'no-key' | 'no-access' | 'request' {
-  const code = (error as ReplyFailure).code
-  return code === 'no-key' || code === 'no-access' ? code : 'request'
-}
-
-function withTimeout<Value>(promise: Promise<Value>, milliseconds: number): Promise<Value> {
-  let timer = 0
-  const timeout = new Promise<never>((_, reject) => {
-    timer = window.setTimeout(() => reject(new Error('Classifier timed out')), milliseconds)
-  })
-  return Promise.race([promise, timeout]).finally(() => {
-    window.clearTimeout(timer)
-  })
-}
-
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closePopover(true)
 })
@@ -322,8 +302,5 @@ document.addEventListener('click', (event) => {
   closePopover(false)
 })
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', start)
-} else {
-  start()
-}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => void start())
+else void start()
