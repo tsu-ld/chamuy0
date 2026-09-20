@@ -1,7 +1,7 @@
 {
   "name": "chamuy0",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "scripts": {
     "build": "bun build extension/background.ts extension/content.ts extension/popup.ts --outdir extension/dist --target browser",
