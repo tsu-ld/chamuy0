@@ -4,7 +4,6 @@ export const DEFAULT_MODEL = 'jev-1.13.0'
 
 const BASE_URL = 'https://api.typesafe.ai/v1/systemone'
 
-export const API_ORIGIN = 'https://api.typesafe.ai/*'
 const MAX_RETRIES = 2
 const BACKOFF_MS = 500
 const JITTER_RATIO = 0.25

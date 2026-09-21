@@ -1,7 +1,7 @@
 import type { Verdict } from '../core/rubric'
 import type { ClassifyReply } from './protocol'
 import { addExample, buildState } from '../core/examples'
-import { API_ORIGIN, askJev, DEFAULT_MODEL } from '../core/jev'
+import { askJev, DEFAULT_MODEL } from '../core/jev'
 import { buildQuestions, isVerdict, toVerdict } from '../core/rubric'
 import { extensionApi } from './api'
 import { readApiKey, readTraining, writeTraining } from './storage'
@@ -79,9 +79,6 @@ function readText(value: unknown): string {
 async function classify(text: string): Promise<ClassifyReply> {
   const apiKey = await readApiKey()
   if (!apiKey) return { ok: false, code: 'no-key', error: 'TypeSafe API key not set' }
-  if (!(await hasApiAccess())) {
-    return { ok: false, code: 'no-access', error: 'Access to TypeSafe was not granted' }
-  }
   try {
     const pool = await readTraining()
     const response = await askJev(buildQuestions(), buildState(text, pool), { apiKey })
@@ -101,14 +98,6 @@ async function label(message: LabelMessage): Promise<{ ok: true, count: number }
   const updated = addExample(pool, message.text, message.label)
   await writeTraining(updated)
   return { ok: true, count: updated.length }
-}
-
-async function hasApiAccess(): Promise<boolean> {
-  return hasAccess([API_ORIGIN])
-}
-
-async function hasAccess(origins: string[]): Promise<boolean> {
-  return extensionApi.permissions.contains({ origins })
 }
 
 function messageOf(error: unknown): string {

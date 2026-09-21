@@ -234,7 +234,6 @@ function excerpt(text) {
 // core/jev.ts
 var DEFAULT_MODEL = "jev-1.13.0";
 var BASE_URL = "https://api.typesafe.ai/v1/systemone";
-var API_ORIGIN = "https://api.typesafe.ai/*";
 var MAX_RETRIES = 2;
 var BACKOFF_MS = 500;
 var JITTER_RATIO = 0.25;
@@ -342,7 +341,6 @@ function toJevError(error) {
 // extension/api.ts
 var scope = globalThis;
 var extensionApi = scope.browser ?? scope.chrome;
-var isGecko = scope.browser !== undefined;
 function onLocalChange(field, listener) {
   extensionApi.storage.onChanged.addListener((changes, area) => {
     if (area !== "local" || !(field in changes))
@@ -467,9 +465,6 @@ async function classify(text) {
   const apiKey = await readApiKey();
   if (!apiKey)
     return { ok: false, code: "no-key", error: "TypeSafe API key not set" };
-  if (!await hasApiAccess()) {
-    return { ok: false, code: "no-access", error: "Access to TypeSafe was not granted" };
-  }
   try {
     const pool = await readTraining();
     const response = await askJev(buildQuestions(), buildState(text, pool), { apiKey });
@@ -488,12 +483,6 @@ async function label(message) {
   const updated = addExample(pool, message.text, message.label);
   await writeTraining(updated);
   return { ok: true, count: updated.length };
-}
-async function hasApiAccess() {
-  return hasAccess([API_ORIGIN]);
-}
-async function hasAccess(origins) {
-  return extensionApi.permissions.contains({ origins });
 }
 function messageOf(error) {
   return error instanceof Error ? error.message : String(error);

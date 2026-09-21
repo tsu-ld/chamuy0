@@ -17,9 +17,8 @@ A small Firefox and Chrome extension that scores every post in your LinkedIn fee
 1. Download the latest release: [Releases](https://github.com/tsu-ld/chamuy0/releases/latest).
 2. In Firefox, open a new tab and go to `about:debugging#/runtime/this-firefox`.
 3. Click **Load Temporary Add-on…** and select the zip you downloaded. If Firefox does not accept the zip, unzip it first and select `manifest.json` inside the folder.
-4. The setup page opens by itself. Click **Allow access** and accept the prompt. If the prompt closes before you can answer (some Firefox builds, Zen included, dismiss it in about a second), grant it by hand: open `about:addons`, click **chamuy0**, open the **Permissions** tab, and turn on `www.linkedin.com` and `api.typesafe.ai`. The settings page notices on its own.
-5. Paste your TypeSafe API key and click **Save**.
-6. Open [linkedin.com](https://www.linkedin.com). Chips appear as posts load.
+4. The setup page opens by itself. Paste your TypeSafe API key and click **Save**.
+5. Open [linkedin.com](https://www.linkedin.com). Chips appear as posts load.
 
 > Firefox removes temporary add-ons when it closes. To load it again, repeat steps 2 and 3. It takes five seconds and you never paste the key twice.
 >
@@ -32,7 +31,7 @@ A small Firefox and Chrome extension that scores every post in your LinkedIn fee
 1. Download and unzip the same release zip.
 2. Open `chrome://extensions` and turn on **Developer mode** (top right).
 3. Click **Load unpacked** and select the unzipped folder.
-4. Click the extension icon to open the settings popup, click **Allow access**, and paste your TypeSafe API key.
+4. Click the extension icon to open the settings popup and paste your TypeSafe API key.
 
 ## Your TypeSafe API key
 
@@ -54,9 +53,8 @@ Score bands: below 2.5 is clean, 2.5 to 5 is borderline, 5 and up is slop.
 
 ## Notes and troubleshooting
 
-- **The chip never appears.** On Firefox, make sure the access step is granted in the settings page. Reload the LinkedIn tab after granting. The content script logs how many posts it found: open the browser console on linkedin.com and look for `[lnslop]`.
-- **The permission prompt closes by itself (Zen and some Firefox builds).** Grant access by hand: `about:addons` → chamuy0 → **Permissions** tab → turn on `www.linkedin.com` and `api.typesafe.ai`. The settings page flips to granted on its own.
-- **The chip shows `!`.** The classifier was not reachable. Click the chip to retry. If it persists, check the key and the access state in the settings page.
+- **The chip never appears.** Make sure you are on linkedin.com and reload the tab after installing or updating the extension. The content script logs how many posts it found: open the browser console on linkedin.com and look for `[lnslop]`.
+- **The chip shows `!`.** The classifier was not reachable. Click the chip to retry. If it persists, check the key in the settings page.
 - **A post has no chip.** Posts without text (images only) or shorter than 40 characters are skipped on purpose.
 - **Permanent install on Firefox.** Regular Firefox only keeps signed add-ons. Two options: use Firefox Developer Edition or Nightly with `xpinstall.signatures.required` set to `false` in `about:config`, or sign the zip yourself on [addons.mozilla.org](https://addons.mozilla.org) (choose "On your own", it is free and does not list the add-on publicly). The zip is already structured for signing.
 - **Permanent install on Chrome.** Loaded folders stay installed. That is all.

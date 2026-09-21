@@ -1,8 +1,6 @@
 import type { TrainingExample } from '../core/examples'
 import type { HideSettings } from '../core/hide'
 import { parseHide } from '../core/hide'
-import { extensionApi, isGecko } from './api'
-import { ACCESS_ORIGINS } from './origins'
 import { readApiKey, readHide, readTraining, writeApiKey, writeHide } from './storage'
 
 const EXCERPT_LIMIT = 140
@@ -12,9 +10,6 @@ const SCORE_DECIMALS = 1
 const keyInput = mustFind<HTMLInputElement>('#api-key')
 const keyForm = mustFind<HTMLFormElement>('#key-form')
 const keyStatus = mustFind<HTMLElement>('#key-status')
-const accessButton = mustFind<HTMLButtonElement>('#access-button')
-const accessStatus = mustFind<HTMLElement>('#access-status')
-const accessManual = mustFind<HTMLElement>('#access-manual')
 const trainingCount = mustFind<HTMLElement>('#training-count')
 const trainingList = mustFind<HTMLUListElement>('#training-list')
 const hideEnabled = mustFind<HTMLInputElement>('#hide-enabled')
@@ -25,11 +20,7 @@ const hideStatus = mustFind<HTMLElement>('#hide-status')
 async function start(): Promise<void> {
   keyInput.value = await readApiKey()
   renderHide(await readHide())
-  await refreshAccess()
   await renderTraining()
-  accessButton.addEventListener('click', () => {
-    void requestAccess()
-  })
   keyForm.addEventListener('submit', (event) => {
     event.preventDefault()
     void saveKey()
@@ -43,35 +34,6 @@ async function start(): Promise<void> {
   hideThreshold.addEventListener('change', () => {
     void saveHide()
   })
-  extensionApi.permissions.onAdded.addListener(() => {
-    void refreshAccess()
-  })
-  extensionApi.permissions.onRemoved.addListener(() => {
-    void refreshAccess()
-  })
-}
-
-async function requestAccess(): Promise<boolean> {
-  const granted = await extensionApi.permissions.request({ origins: ACCESS_ORIGINS })
-  await refreshAccess(!granted)
-  return granted
-}
-
-async function refreshAccess(promptDismissed = false): Promise<void> {
-  const granted = await extensionApi.permissions.contains({ origins: ACCESS_ORIGINS })
-  accessButton.hidden = granted
-  accessManual.hidden = granted || !isGecko
-  if (granted) {
-    accessStatus.textContent = 'Access granted. Open or reload linkedin.com.'
-    return
-  }
-  if (promptDismissed) {
-    accessStatus.textContent = isGecko
-      ? 'The prompt closed before you could answer. Grant access by hand.'
-      : 'Access was denied. Click the button again and choose Allow.'
-    return
-  }
-  accessStatus.textContent = 'Access is off. Click the button and accept the prompt.'
 }
 
 async function saveKey(): Promise<void> {
@@ -81,10 +43,7 @@ async function saveKey(): Promise<void> {
     return
   }
   await writeApiKey(apiKey)
-  const granted = await extensionApi.permissions.contains({ origins: ACCESS_ORIGINS })
-  keyStatus.textContent = granted
-    ? 'Saved. Open or reload linkedin.com to classify with it.'
-    : 'Saved. Grant access in step 1, then open linkedin.com.'
+  keyStatus.textContent = 'Saved. Open or reload linkedin.com to classify with it.'
 }
 
 function readHideForm(): HideSettings {

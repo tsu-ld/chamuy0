@@ -10,7 +10,7 @@ export interface SlopReply {
 
 interface FailureReply {
   ok: false
-  code: 'no-key' | 'no-access' | 'request'
+  code: 'no-key' | 'request'
   error: string
 }
 

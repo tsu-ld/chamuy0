@@ -32,8 +32,8 @@ Language: English
 
 Permission justifications:
 - `storage`: saves your API key, labels and settings in the browser profile.
-- Optional host `https://www.linkedin.com/*`: reads feed post text to classify it. Requested at runtime, never granted by default.
-- Optional host `https://api.typesafe.ai/*`: sends post text for scoring. Requested at runtime.
+- Host `https://www.linkedin.com/*`: reads feed post text to classify it.
+- Host `https://api.typesafe.ai/*`: sends post text for scoring.
 
 Data usage disclosure: website content (post text the user views) is transmitted to api.typesafe.ai — a third party — solely to provide the core classification feature. Authentication information (the user's own API key) is stored locally and transmitted to the same third party for that purpose. Data is not sold, not used for advertising, and not used for creditworthiness or lending.
 
@@ -46,4 +46,4 @@ Summary (250 chars max):
 Category: Productivity
 License: MIT
 
-Notes for reviewers: the extension needs a TypeSafe API key (early access, https://typesafe.ai) to classify posts. Without a key it shows a setup page and stays inert. To test: load the extension, open the settings page, paste a key, grant access, then open linkedin.com — chips appear on posts. `dev/fixture-feed.html` in the repository mimics the feed DOM with fixture posts for offline testing.
+Notes for reviewers: the extension needs a TypeSafe API key (early access, https://typesafe.ai) to classify posts. Without a key it shows a setup page and stays inert. To test: load the extension, open the settings page, paste a key, then open linkedin.com — chips appear on posts. `dev/fixture-feed.html` in the repository mimics the feed DOM with fixture posts for offline testing.

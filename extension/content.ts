@@ -188,7 +188,7 @@ function findActionBar(card: HTMLElement): HTMLElement | null {
 }
 
 function handleChipClick(chip: HTMLButtonElement): void {
-  if (chip.dataset.lnslopCode === 'no-key' || chip.dataset.lnslopCode === 'no-access') {
+  if (chip.dataset.lnslopCode === 'no-key') {
     const text = chip.dataset.lnslopText ?? ''
     delete chip.dataset.lnslopCode
     applyPending(chip)

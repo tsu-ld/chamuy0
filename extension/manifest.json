@@ -10,7 +10,7 @@
     }
   },
   "permissions": ["storage"],
-  "optional_host_permissions": [
+  "host_permissions": [
     "https://www.linkedin.com/*",
     "https://api.typesafe.ai/*"
   ],

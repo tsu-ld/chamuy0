@@ -223,7 +223,6 @@ function shouldHide(score, settings) {
 // extension/api.ts
 var scope = globalThis;
 var extensionApi = scope.browser ?? scope.chrome;
-var isGecko = scope.browser !== undefined;
 function onLocalChange(field, listener) {
   extensionApi.storage.onChanged.addListener((changes, area) => {
     if (area !== "local" || !(field in changes))
@@ -354,8 +353,7 @@ async function requestVerdict(text) {
   throw new Error("Malformed classifier reply");
 }
 function readFailureCode(error) {
-  const code = error.code;
-  return code === "no-key" || code === "no-access" ? code : "request";
+  return error.code === "no-key" ? "no-key" : "request";
 }
 function withTimeout(promise, milliseconds) {
   let timer = 0;
@@ -839,7 +837,7 @@ function findActionBar(card) {
   return null;
 }
 function handleChipClick(chip) {
-  if (chip.dataset.lnslopCode === "no-key" || chip.dataset.lnslopCode === "no-access") {
+  if (chip.dataset.lnslopCode === "no-key") {
     const text = chip.dataset.lnslopText ?? "";
     delete chip.dataset.lnslopCode;
     applyPending(chip);

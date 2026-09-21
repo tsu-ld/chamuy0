@@ -299,22 +299,6 @@
 
 .lnslop-status { min-block-size: 1.4em; margin: 6px 0 0; color: var(--lnslop-ink-soft); font-size: 12px; }
 
-.lnslop-manual {
-  margin-block-start: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--lnslop-hairline-soft);
-  border-radius: 6px;
-  background: var(--lnslop-hairline-soft);
-  color: var(--lnslop-ink-soft);
-  font-size: 12.5px;
-}
-
-.lnslop-manual-title { margin: 0 0 6px; color: var(--lnslop-ink); font-weight: 600; }
-.lnslop-manual p { margin: 0 0 6px; }
-.lnslop-manual p:last-child { margin-block-end: 0; }
-.lnslop-manual ol { margin: 0 0 6px; padding-inline-start: 20px; }
-.lnslop-manual li { padding-block: 2px; }
-.lnslop-manual code { font-family: var(--lnslop-mono); font-size: 11.5px; }
 .lnslop-examples { margin: 4px 0 0; padding: 0; list-style: none; }
 .lnslop-example { display: flex; gap: 10px; padding-block: 8px; border-block-start: 1px solid var(--lnslop-hairline-soft); }
 .lnslop-example:first-child { border-block-start: 0; }
