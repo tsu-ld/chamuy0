@@ -1,0 +1,11 @@
+{
+  "name": "chamuy0",
+  "compatibility_date": "2026-09-16",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "site",
+    "not_found_handling": "404-page"
+  }
+}

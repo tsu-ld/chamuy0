@@ -1,0 +1,677 @@
+/* chamuy0 landing — tokens verbatim from extension/badge.css (prefix dropped). */
+
+:root {
+  --canvas: #f3f2ef;
+  --surface: #fff;
+  --hairline: rgba(0, 0, 0, .15);
+  --hairline-soft: rgba(0, 0, 0, .08);
+  --ink: rgba(0, 0, 0, .9);
+  --ink-soft: rgba(0, 0, 0, .6);
+  --hover: rgba(0, 0, 0, .08);
+  --positive: #057642;
+  --caution: #915907;
+  --negative: #b24020;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  --ease: cubic-bezier(.2, 0, 0, 1);
+
+  /* Five-step type scale, 1.25 ratio over 16px base. */
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.5625rem;
+  --step-3: 1.9375rem;
+  --step-4: 2.4375rem;
+
+  --measure: 68ch;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #1b1f23;
+    --surface: #2a3138;
+    --hairline: rgba(255, 255, 255, .16);
+    --hairline-soft: rgba(255, 255, 255, .09);
+    --ink: rgba(255, 255, 255, .92);
+    --ink-soft: rgba(255, 255, 255, .62);
+    --hover: rgba(255, 255, 255, .12);
+    --positive: #7cc9a2;
+    --caution: #d9ab63;
+    --negative: #e08a6e;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font: 400 var(--step-0)/1.55 var(--font);
+  text-rendering: optimizeLegibility;
+}
+
+img { max-inline-size: 100%; }
+
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+
+h1 {
+  max-inline-size: 14ch;
+  font-size: var(--step-4);
+  font-weight: 600;
+  letter-spacing: -.015em;
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+h2 {
+  margin-block-end: 24px;
+  font-size: var(--step-2);
+  font-weight: 600;
+  letter-spacing: -.01em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+h3 { font-size: var(--step-0); font-weight: 600; }
+
+a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--hairline); text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--ink); }
+
+code {
+  padding: 1px 5px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 4px;
+  background: var(--surface);
+  font: 400 .875em/1.4 var(--mono);
+}
+
+.wrap { max-inline-size: 1120px; margin-inline: auto; padding-inline: 24px; }
+
+.measure { max-inline-size: var(--measure); }
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip {
+  position: absolute;
+  inset-block-start: -64px;
+  inset-inline-start: 16px;
+  z-index: 50;
+  padding: 8px 14px;
+  border-radius: 4px;
+  background: var(--ink);
+  color: var(--surface);
+  font-weight: 600;
+  text-decoration: none;
+  transition: inset-block-start 120ms var(--ease);
+}
+
+.skip:focus-visible { inset-block-start: 8px; }
+
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ------------------------------ buttons ------------------------------ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  background: var(--ink);
+  color: var(--surface);
+  font: 600 15px/1.3 var(--font);
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 120ms var(--ease), background 120ms var(--ease);
+}
+
+.btn:hover { opacity: .88; }
+
+.btn-ghost {
+  border-color: var(--hairline);
+  background: transparent;
+  color: var(--ink);
+}
+
+.btn-ghost:hover { background: var(--hover); opacity: 1; }
+
+.btn-small { padding: 7px 14px; font-size: 13.5px; }
+
+/* ------------------------------ header ------------------------------- */
+
+.site-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 10;
+  border-block-end: 1px solid var(--hairline-soft);
+  background: var(--canvas);
+}
+
+.site-header-row { display: flex; align-items: center; gap: 28px; block-size: 57px; }
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.wordmark img { display: block; inline-size: 22px; block-size: 22px; }
+
+.site-nav { display: flex; gap: 20px; }
+
+.site-nav a {
+  color: var(--ink-soft);
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 120ms var(--ease);
+}
+
+.site-nav a:hover { color: var(--ink); }
+
+.header-cta { margin-inline-start: auto; }
+
+/* ------------------------------- hero -------------------------------- */
+
+.hero { padding-block: 72px 88px; }
+
+.eyebrow {
+  margin-block-end: 18px;
+  color: var(--ink-soft);
+  font: 500 13px/1.5 var(--mono);
+  letter-spacing: .02em;
+}
+
+.lede {
+  max-inline-size: 58ch;
+  margin-block-start: 22px;
+  color: var(--ink);
+  font-size: var(--step-1);
+  line-height: 1.45;
+}
+
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-block-start: 28px; }
+
+.small-print {
+  max-inline-size: 58ch;
+  margin-block-start: 18px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.figure { margin-block-start: 40px; }
+
+.figure img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.figure figcaption {
+  margin-block-start: 10px;
+  color: var(--ink-soft);
+  font: 400 13px/1.5 var(--mono);
+}
+
+/* Overflow-window crop. The four vars describe the visible region of the
+   source image: --crop-ar = region w/h, --crop-w = full w / region w,
+   --crop-x = -(region x / region w), --crop-y = -(region y / region h). */
+.crop {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: var(--crop-ar);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.crop img {
+  position: absolute;
+  inset-block-start: var(--crop-y);
+  inset-inline-start: var(--crop-x);
+  inline-size: var(--crop-w);
+  max-inline-size: none;
+  block-size: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+.hero-crop { --crop-ar: 1280/800; --crop-w: 100%; --crop-y: 0%; --crop-x: 0%; }
+
+/* 05-banish.png: the band with the two frames and their time labels,
+   source region x 0..1280, y 280..740. */
+.band-crop { --crop-ar: 1280/460; --crop-w: 100%; --crop-y: -60.87%; --crop-x: 0%; }
+
+/* ----------------------------- sections ------------------------------ */
+
+.section { padding-block: 88px; border-block-start: 1px solid var(--hairline-soft); }
+
+/* Three lines, no cards. */
+.lines { padding: 0; border-block-start: 1px solid var(--hairline-soft); list-style: none; }
+
+.lines li {
+  display: grid;
+  grid-template-columns: minmax(200px, 300px) 1fr;
+  gap: 8px 40px;
+  align-items: baseline;
+  padding-block: 26px;
+  border-block-end: 1px solid var(--hairline-soft);
+}
+
+.lines strong { font-size: var(--step-1); font-weight: 600; letter-spacing: -.005em; }
+.lines p { max-inline-size: var(--measure); }
+
+.glyph { font-weight: 600; }
+.glyph-good { color: var(--positive); }
+.glyph-meh { color: var(--caution); }
+.glyph-bad { color: var(--negative); }
+
+/* Numbered steps with monospace numerals. */
+.steps { padding: 0; border-block-start: 1px solid var(--hairline-soft); list-style: none; }
+
+.steps > li {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 24px;
+  padding-block: 28px;
+  border-block-end: 1px solid var(--hairline-soft);
+}
+
+.step-num {
+  padding-block-start: 3px;
+  color: var(--ink-soft);
+  font: 400 var(--step-1)/1.3 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.steps strong { display: block; margin-block-end: 6px; font-size: var(--step-1); font-weight: 600; letter-spacing: -.005em; }
+.steps p { max-inline-size: var(--measure); }
+
+/* --------------------------- banish demo ----------------------------- */
+/* Motion mirrors extension/badge.css: 150ms stamp, 240ms collapse, same ease. */
+
+.demo { max-inline-size: 560px; margin-block: 36px 8px; }
+
+.demo-post {
+  position: relative;
+  overflow: hidden;
+  overflow-anchor: none;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.demo-post.is-banish { transition: height 240ms var(--ease) 120ms; }
+
+.demo-body { padding: 12px 16px 10px; }
+
+.demo-post.is-banish .demo-body {
+  transition: opacity 200ms var(--ease), translate 200ms var(--ease);
+}
+
+.demo-post.is-banish.is-fall .demo-body { opacity: 0; translate: 0 -8px; }
+
+.demo-author { margin-block-end: 6px; font-weight: 600; font-size: 14.5px; }
+.demo-text p { font-size: 14.5px; }
+.demo-text p + p { margin-block-start: 10px; }
+
+.demo-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-block-start: 12px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid var(--hairline-soft);
+}
+
+.demo-act { color: var(--ink-soft); font-size: 13px; font-weight: 600; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+  padding: 6px 8px;
+  border-radius: 4px;
+  color: var(--ink-soft);
+  font: 600 14px/1.2 var(--font);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.chip-dot { inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--ink-soft); }
+.chip-bad .chip-dot { background: var(--negative); }
+
+.demo-tomb {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  block-size: 2.75rem;
+  padding-inline: 14px;
+  border-block-start: 1px solid var(--hairline-soft);
+  color: var(--ink-soft);
+  font: 400 12.5px/1.4 var(--font);
+}
+
+.demo-post.is-banish .demo-tomb,
+.demo-post.is-hidden .demo-tomb { display: flex; }
+
+.demo-post.is-banish .demo-tomb {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  border-block-start: 0;
+  opacity: 0;
+  transition: opacity 160ms var(--ease) 260ms;
+}
+
+.demo-post.is-banish.is-fall .demo-tomb { opacity: 1; }
+
+.demo-post.is-hidden > :not(.demo-tomb) { display: none; }
+
+.demo-tomb-text {
+  flex: 1;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.demo-show {
+  flex: none;
+  padding: 4px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: none;
+  color: var(--ink);
+  font: 600 12px/1.4 var(--font);
+  cursor: pointer;
+}
+
+.demo-show:hover { background: var(--hover); }
+
+/* The stamp: same glyph, rotation and scale curve as the extension. */
+.demo-post.is-banish::after {
+  content: "\2623";
+  position: absolute;
+  inset-block-start: 24%;
+  inset-inline-start: 50%;
+  z-index: 4;
+  color: var(--negative);
+  font-size: 56px;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(-14deg) scale(1.6);
+}
+
+.demo-post.is-banish.is-fall::after {
+  animation: stamp 150ms var(--ease) both, stamp-out 120ms ease-in 240ms both;
+}
+
+@keyframes stamp {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-14deg) scale(1.6); }
+  60% { opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(1.06); }
+  100% { opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(1); }
+}
+
+@keyframes stamp-out {
+  to { opacity: 0; }
+}
+
+/* Above 8 the stamp gets a ring. */
+.demo-post.is-banish.is-severe::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 24%;
+  inset-inline-start: 50%;
+  z-index: 3;
+  inline-size: 72px;
+  block-size: 72px;
+  border: 1px solid var(--negative);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(.6);
+}
+
+.demo-post.is-banish.is-severe.is-fall::before {
+  animation: stamp-ring 360ms var(--ease) 90ms both;
+}
+
+@keyframes stamp-ring {
+  0% { opacity: .5; transform: translate(-50%, -50%) scale(.6); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.35); }
+}
+
+.demo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin-block-start: 16px;
+}
+
+.demo-note {
+  flex: 1;
+  min-inline-size: 220px;
+  color: var(--ink-soft);
+  font: 400 12.5px/1.5 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------ signals ------------------------------ */
+
+.signals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 48px;
+  padding: 0;
+  list-style: none;
+}
+
+.signals li {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding-block: 14px;
+  border-block-start: 1px solid var(--hairline-soft);
+  font-weight: 550;
+}
+
+.signals li:nth-child(-n+2) { border-block-start: 0; }
+
+.sig-num {
+  inline-size: 2ch;
+  color: var(--ink-soft);
+  font: 400 13px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.caption {
+  margin-block-start: 18px;
+  color: var(--ink-soft);
+  font: 400 13px/1.5 var(--mono);
+}
+
+/* ------------------------------- cost -------------------------------- */
+
+.receipt {
+  max-inline-size: 460px;
+  margin-block: 28px;
+  border-block: 1px solid var(--hairline-soft);
+  font-family: var(--mono);
+  font-size: 14.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt > div {
+  display: grid;
+  grid-template-columns: 9ch 1fr;
+  gap: 16px;
+  padding-block: 12px;
+}
+
+.receipt > div + div { border-block-start: 1px solid var(--hairline-soft); }
+
+.receipt-val { font-weight: 600; }
+
+/* ------------------------------ privacy ------------------------------ */
+
+.privacy { display: grid; grid-template-columns: repeat(3, 1fr); margin-block-start: 8px; }
+
+.privacy > div { padding: 4px 28px 4px; border-inline-start: 1px solid var(--hairline-soft); }
+.privacy > div:first-child { padding-inline-start: 0; border-inline-start: 0; }
+.privacy > div:last-child { padding-inline-end: 0; }
+
+.privacy h3 {
+  margin-block-end: 12px;
+  color: var(--ink-soft);
+  font: 500 13px/1.4 var(--mono);
+  letter-spacing: .02em;
+}
+
+.privacy p { font-size: 15px; }
+
+/* ------------------------------ install ------------------------------ */
+
+.status-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  max-inline-size: var(--measure);
+  margin-block-end: 36px;
+  padding: 14px 16px;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 14.5px;
+}
+
+.status-dot {
+  flex: none;
+  align-self: center;
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: 50%;
+  background: var(--caution);
+}
+
+.install-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 56px;
+  align-items: start;
+}
+
+.install-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.install-col h3 {
+  margin-block-end: 14px;
+  padding-block-end: 8px;
+  border-block-end: 1px solid var(--hairline-soft);
+}
+
+.install-steps { margin: 0; padding-inline-start: 22px; }
+
+.install-steps li { padding-block: 6px; padding-inline-start: 6px; }
+.install-steps li::marker { color: var(--ink-soft); font: 400 13px var(--mono); font-variant-numeric: tabular-nums; }
+
+.install-col .small-print { margin-block-start: 16px; }
+
+.install-figure { margin-block-start: 0; }
+
+#install > .wrap > .small-print { margin-block-start: 36px; }
+
+/* -------------------------------- faq -------------------------------- */
+
+.faq-item { padding-block: 22px; border-block-start: 1px solid var(--hairline-soft); }
+.faq-item:last-child { border-block-end: 1px solid var(--hairline-soft); }
+.faq-item p { max-inline-size: var(--measure); margin-block-start: 8px; }
+
+/* ------------------------------ final cta ---------------------------- */
+
+.final .cta-row { margin-block-start: 4px; }
+
+/* ------------------------------ footer ------------------------------- */
+
+.site-footer {
+  border-block-start: 1px solid var(--hairline-soft);
+  padding-block: 32px 40px;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+}
+
+.footer-line { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.footer-word { font-weight: 600; color: var(--ink); margin-inline-end: 4px; }
+.footer-line a { color: var(--ink-soft); text-decoration: none; }
+.footer-line a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.footer-note { margin-block-start: 10px; font-size: 12.5px; }
+
+/* ------------------------- reduced motion ---------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  .skip,
+  .btn,
+  .site-nav a { transition: none; }
+
+  .demo-post.is-banish,
+  .demo-post.is-banish .demo-body,
+  .demo-post.is-banish .demo-tomb { transition: none; }
+
+  .demo-post.is-banish::before,
+  .demo-post.is-banish::after { animation: none; content: none; }
+}
+
+/* ------------------------------ mobile ------------------------------- */
+
+@media (max-width: 760px) {
+  .site-nav { display: none; }
+  .hero { padding-block: 48px 64px; }
+  .section { padding-block: 64px; }
+  h1 { font-size: var(--step-3); }
+  h2 { font-size: var(--step-1); }
+
+  .lines li { grid-template-columns: 1fr; gap: 6px; }
+  .steps > li { grid-template-columns: 44px 1fr; gap: 16px; }
+  .signals { grid-template-columns: 1fr; }
+  .signals li:nth-child(2) { border-block-start: 1px solid var(--hairline-soft); }
+  .privacy { grid-template-columns: 1fr; }
+  .privacy > div { padding: 20px 0; border-inline-start: 0; border-block-start: 1px solid var(--hairline-soft); }
+  .privacy > div:first-child { border-block-start: 0; padding-block-start: 0; }
+  .install-grid { grid-template-columns: 1fr; gap: 40px; }
+  .install-cols { grid-template-columns: 1fr; }
+  .install-figure { max-inline-size: 340px; }
+}
+
+/* At phone width wide shots become illegible, so the crops tighten:
+   the hero shows only the left panel (slop post + breakdown, source
+   x 56..648, y 288..708) and the banish band keeps the 150 ms frame. */
+@media (max-width: 720px) {
+  .hero-crop { --crop-ar: 592/420; --crop-w: 216.2%; --crop-y: -68.6%; --crop-x: -9.5%; }
+  .band-crop { --crop-ar: 559/460; --crop-w: 229%; --crop-y: -60.87%; --crop-x: -11.45%; }
+}

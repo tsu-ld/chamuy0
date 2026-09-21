@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>chamuy0 — Engagement bait, scored out of 10</title>
+    <meta name="description" content="chamuy0 reads your LinkedIn feed and puts a chip on every post. Click the chip to see the signals behind the score. Set a threshold and the worst posts get stamped and folded into a thin marker you can reopen." />
+
+    <link rel="canonical" href="https://chamuy0.t-su.workers.dev/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://chamuy0.t-su.workers.dev/" />
+    <meta property="og:title" content="chamuy0 — Engagement bait, scored out of 10" />
+    <meta property="og:description" content="A chip on every LinkedIn post. Click it for the why. Banish the rest. MIT, no account, no analytics." />
+    <meta property="og:image" content="https://chamuy0.t-su.workers.dev/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="A LinkedIn post scored 8.4 slop, with the signal breakdown open beside a clean post scored 1.6." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#f3f2ef" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1b1f23" media="(prefers-color-scheme: dark)" />
+
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="wrap site-header-row">
+        <a class="wordmark" href="/" aria-label="chamuy0 home">
+          <img src="/icon.svg" alt="" width="22" height="22" />
+          <span>chamuy0</span>
+        </a>
+        <nav class="site-nav" aria-label="Sections">
+          <a href="#how">How it works</a>
+          <a href="#signals">Signals</a>
+          <a href="#cost">Cost</a>
+          <a href="#privacy">Privacy</a>
+          <a href="#install">Install</a>
+          <a href="https://github.com/tsu-ld/chamuy0">GitHub</a>
+        </nav>
+        <a class="btn btn-small header-cta" href="https://github.com/tsu-ld/chamuy0/releases/latest">Download</a>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ============================ hero ============================ -->
+      <section class="hero">
+        <div class="wrap">
+          <p class="eyebrow">Chrome + Firefox extension · MIT · LinkedIn only, for now</p>
+          <h1>Engagement bait, scored out of 10.</h1>
+          <p class="lede">chamuy0 reads your LinkedIn feed and puts a chip on every post. Click the chip to see the signals behind the score. Set a threshold and the worst posts get stamped and folded into a thin marker you can reopen.</p>
+          <div class="cta-row">
+            <a class="btn" href="https://github.com/tsu-ld/chamuy0/releases/latest">Download the release zip</a>
+            <a class="btn btn-ghost" href="https://github.com/tsu-ld/chamuy0">Read the source</a>
+          </div>
+          <p class="small-print">Chrome Web Store and addons.mozilla.org listings are pending review. Until they land, the release zip is the only install path. It takes about two minutes.</p>
+          <figure class="figure hero-figure">
+            <span class="crop hero-crop">
+              <img src="/img/01-comparison.png" alt="Two LinkedIn posts side by side: one scored 8.4 slop with its signal breakdown open, one scored 1.6 clean." width="1280" height="800" fetchpriority="high" />
+            </span>
+            <figcaption>The chip, and the breakdown behind it.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ===================== three lines, no cards ===================== -->
+      <section class="section" aria-label="What you get">
+        <div class="wrap">
+          <ul class="lines">
+            <li>
+              <strong>A chip on every post.</strong>
+              <p><span class="glyph glyph-good">✓</span> 1.6 clean, <span class="glyph glyph-meh">≈</span> 3.4 borderline, <span class="glyph glyph-bad">☣</span> 8.4 slop. Posts shorter than 40 characters are skipped on purpose.</p>
+            </li>
+            <li>
+              <strong>Click it for the why.</strong>
+              <p>The score out of 10, the verdict, and the eight signals sorted by confidence.</p>
+            </li>
+            <li>
+              <strong>Train it as you go.</strong>
+              <p>Label a post clean, borderline or slop. Later classifications use your latest labels as reference.</p>
+            </li>
+          </ul>
+          <figure class="figure">
+            <img src="/img/chips.png" alt="Six chip states: scoring in progress, clean, borderline, slop, classifier unreachable, and the floating chip on a media post." width="1600" height="140" loading="lazy" />
+            <figcaption>Every chip state, including the one for a classifier that did not answer.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ========================= how it works ========================= -->
+      <section class="section" id="how">
+        <div class="wrap">
+          <h2>How it works</h2>
+          <ol class="steps">
+            <li>
+              <span class="step-num" aria-hidden="true">01</span>
+              <div>
+                <strong>Install and paste your key.</strong>
+                <p>Load the extension, open settings, paste a TypeSafe API key. It stays in your browser profile.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-num" aria-hidden="true">02</span>
+              <div>
+                <strong>Scroll your feed. Each post gets a score.</strong>
+                <p>The text of the post goes to api.typesafe.ai to be scored. Nothing else does.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-num" aria-hidden="true">03</span>
+              <div>
+                <strong>Banish what you do not want.</strong>
+                <p>Set a threshold. Posts at or above it get stamped and folded away. Nothing is deleted.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ========================= banish demo ========================= -->
+      <section class="section" id="banish">
+        <div class="wrap">
+          <h2>A banished post leaves a marker, not a hole.</h2>
+          <p class="measure">Posts at or above your threshold collapse into a thin row: the score, the word hidden, and a Show button. Above 8 the stamp gets a ring. The layout does not jump. Every hidden post is one click from coming back.</p>
+
+          <div class="demo">
+            <article class="demo-post" data-demo-post>
+              <div class="demo-body">
+                <p class="demo-author">Jordan Blake</p>
+                <div class="demo-text">
+                  <p>I interviewed a janitor at 5am.</p>
+                  <p>He looked me in the eyes and said: &ldquo;success is rented, not owned.&rdquo;</p>
+                  <p>That conversation changed how I lead.</p>
+                  <p>Agree?</p>
+                </div>
+                <div class="demo-bar">
+                  <span class="demo-act">Like</span>
+                  <span class="demo-act">Comment</span>
+                  <span class="demo-act">Repost</span>
+                  <span class="chip chip-bad" aria-label="Slop 8.4 of 10, slop."><span class="chip-dot" aria-hidden="true"></span><span class="chip-word">Slop</span><span class="chip-num">8.4</span></span>
+                </div>
+              </div>
+              <div class="demo-tomb" role="group" aria-label="Post hidden. Slop score 8.4 of 10.">
+                <span class="demo-tomb-text">Slop 8.4 · hidden</span>
+                <button type="button" class="demo-show" data-demo-show>Show</button>
+              </div>
+            </article>
+            <div class="demo-controls">
+              <button type="button" class="btn btn-ghost" data-demo-replay>Replay the banish</button>
+              <p class="demo-note">150 ms stamp · 240 ms collapse · cubic-bezier(.2, 0, 0, 1). The same motion the extension runs, at the same speed.</p>
+            </div>
+            <p class="visually-hidden" role="status" data-demo-live></p>
+          </div>
+
+          <figure class="figure">
+            <span class="crop band-crop">
+              <img src="/img/05-banish.png" alt="Two frames of the banish motion on the same post: the stamp at 150 milliseconds and the collapsed marker at 600 milliseconds." width="1280" height="800" loading="lazy" />
+            </span>
+            <figcaption>The stamp at 150 ms. The marker at 600 ms.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- =========================== signals =========================== -->
+      <section class="section" id="signals">
+        <div class="wrap">
+          <h2>Eight yes/no questions per post.</h2>
+          <ul class="signals">
+            <li><span class="sig-num" aria-hidden="true">1</span>engagement bait</li>
+            <li><span class="sig-num" aria-hidden="true">2</span>rage bait</li>
+            <li><span class="sig-num" aria-hidden="true">3</span>humblebrag</li>
+            <li><span class="sig-num" aria-hidden="true">4</span>AI generic</li>
+            <li><span class="sig-num" aria-hidden="true">5</span>corporate buzzwords</li>
+            <li><span class="sig-num" aria-hidden="true">6</span>broetry</li>
+            <li><span class="sig-num" aria-hidden="true">7</span>fabricated story</li>
+            <li><span class="sig-num" aria-hidden="true">8</span>manufactured hook</li>
+          </ul>
+          <p class="caption">Plus one score question with ten levels. The whole rubric is one file: <code>core/rubric.ts</code>.</p>
+        </div>
+      </section>
+
+      <!-- ============================= cost ============================= -->
+      <section class="section" id="cost">
+        <div class="wrap">
+          <h2>You bring the key. Here is what it costs.</h2>
+          <p class="measure">Scoring runs on Jev, TypeSafe's decision model, currently in early access. You get your own key from the TypeSafe console. chamuy0 has no account, no subscription, and no server of ours to pay for.</p>
+          <div class="receipt" role="table" aria-label="Cost breakdown">
+            <div role="row"><span class="receipt-val" role="cell">$0.042</span><span role="cell">per million input tokens</span></div>
+            <div role="row"><span class="receipt-val" role="cell">~230</span><span role="cell">tokens per post</span></div>
+            <div role="row"><span class="receipt-val" role="cell">~$0.01</span><span role="cell">per thousand posts</span></div>
+          </div>
+          <p class="small-print">Jev is in early access. If you cannot get a key yet, the extension installs and sits inert until you have one. Long posts cost more than short ones.</p>
+        </div>
+      </section>
+
+      <!-- =========================== privacy =========================== -->
+      <section class="section" id="privacy">
+        <div class="wrap">
+          <h2>The only thing that leaves your browser is the post text.</h2>
+          <div class="privacy">
+            <div>
+              <h3>Stays on your device:</h3>
+              <p>Your TypeSafe key. Your labels and the examples the classifier calibrates with. Your settings, including the hide threshold. All of it in <code>storage.local</code>.</p>
+            </div>
+            <div>
+              <h3>Leaves your device:</h3>
+              <p>The text of the post being scored, sent to api.typesafe.ai with your key. Up to six recent labeled examples ride along as reference.</p>
+            </div>
+            <div>
+              <h3>Never happens:</h3>
+              <p>No account. No analytics. No telemetry. No ads. No server of ours. Nothing posted, commented, or reacted to on your behalf.</p>
+            </div>
+          </div>
+          <p class="caption"><a href="https://github.com/tsu-ld/chamuy0/blob/main/PRIVACY.md">Privacy policy</a></p>
+        </div>
+      </section>
+
+      <!-- =========================== install =========================== -->
+      <section class="section" id="install">
+        <div class="wrap">
+          <h2>Install from GitHub. About two minutes.</h2>
+          <p class="status-line"><span class="status-dot" aria-hidden="true"></span>The Chrome Web Store and addons.mozilla.org listings are pending. The release zip is the same build; it just needs a few clicks to load.</p>
+
+          <div class="install-grid">
+            <div class="install-cols">
+              <div class="install-col">
+                <h3>Firefox</h3>
+                <ol class="install-steps">
+                  <li><a href="https://github.com/tsu-ld/chamuy0/releases/latest">Download the latest release</a>.</li>
+                  <li>Open <code>about:debugging#/runtime/this-firefox</code>.</li>
+                  <li>Load Temporary Add-on… and pick the zip.</li>
+                  <li>The setup page opens by itself. Paste your key, Save.</li>
+                  <li>Open linkedin.com.</li>
+                </ol>
+                <p class="small-print">Firefox drops temporary add-ons when it closes. Repeat steps 2 and 3. You never paste the key twice.</p>
+              </div>
+              <div class="install-col">
+                <h3>Chrome, Edge, Brave</h3>
+                <ol class="install-steps">
+                  <li>Download and unzip the release.</li>
+                  <li>Open <code>chrome://extensions</code> and turn on Developer mode.</li>
+                  <li>Load unpacked, pick the folder.</li>
+                  <li>Click the extension icon and paste your key.</li>
+                </ol>
+              </div>
+            </div>
+            <figure class="figure install-figure">
+              <img src="/img/popup.png" alt="The chamuy0 settings page: API key field, hide threshold slider set to 6.5, and three training examples." width="768" height="1600" loading="lazy" />
+              <figcaption>Settings, the first time you open it.</figcaption>
+            </figure>
+          </div>
+
+          <p class="small-print">Install asks for three things: <code>storage</code>, <code>linkedin.com</code>, and <code>api.typesafe.ai</code>. Permissions are granted at install; there is no way to ask for less and still read the feed.</p>
+        </div>
+      </section>
+
+      <!-- ============================= faq ============================= -->
+      <section class="section" id="faq">
+        <div class="wrap">
+          <h2>FAQ</h2>
+          <div class="faq">
+            <div class="faq-item">
+              <h3>Does it send my LinkedIn data anywhere?</h3>
+              <p>Only the text of the post being scored, to api.typesafe.ai. Your key and labels stay in your browser profile.</p>
+            </div>
+            <div class="faq-item">
+              <h3>What model scores the posts?</h3>
+              <p>Jev, a decision model from TypeSafe. It returns a score and signals, not text. It cannot write or hallucinate a post.</p>
+            </div>
+            <div class="faq-item">
+              <h3>Why do I need my own API key?</h3>
+              <p>So there is no server of ours to run, pay for, or trust with your data. The key is yours and it never reaches us.</p>
+            </div>
+            <div class="faq-item">
+              <h3>What does it cost to run?</h3>
+              <p>About $0.042 per million input tokens. Roughly a cent per thousand posts. A full day of scrolling is a fraction of a cent.</p>
+            </div>
+            <div class="faq-item">
+              <h3>Will it hide posts I wanted?</h3>
+              <p>Nothing is deleted. A hidden post becomes a thin marker with a Show button, and you can raise the threshold.</p>
+            </div>
+            <div class="faq-item">
+              <h3>Why is the install manual?</h3>
+              <p>The store listings are still in review. The zip is the same build.</p>
+            </div>
+            <div class="faq-item">
+              <h3>Does it work on Firefox?</h3>
+              <p>Yes. Regular Firefox only keeps signed add-ons, so a permanent install means signing the zip on addons.mozilla.org (free, not public) or using Developer Edition. Temporary loading works everywhere.</p>
+            </div>
+            <div class="faq-item">
+              <h3>Does it work anywhere but LinkedIn?</h3>
+              <p>Not yet.</p>
+            </div>
+            <div class="faq-item">
+              <h3>Is it really open source?</h3>
+              <p>MIT. The whole thing, including the rubric, is at <a href="https://github.com/tsu-ld/chamuy0">github.com/tsu-ld/chamuy0</a>.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================== final cta ========================== -->
+      <section class="section final">
+        <div class="wrap">
+          <h2>Install chamuy0.</h2>
+          <div class="cta-row">
+            <a class="btn" href="https://github.com/tsu-ld/chamuy0/releases/latest">Download the release zip</a>
+            <a class="btn btn-ghost" href="https://github.com/tsu-ld/chamuy0">Read the source</a>
+          </div>
+          <p class="small-print">MIT. No account. No analytics. LinkedIn only, for now.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p class="footer-line">
+          <span class="footer-word">chamuy0</span>
+          <a href="https://github.com/tsu-ld/chamuy0/blob/main/LICENSE">MIT</a>
+          <a href="https://github.com/tsu-ld/chamuy0">GitHub</a>
+          <a href="https://github.com/tsu-ld/chamuy0/blob/main/PRIVACY.md">Privacy</a>
+          <a href="https://github.com/tsu-ld/chamuy0/issues">Issues</a>
+        </p>
+        <p class="footer-note">Not affiliated with LinkedIn. Scoring by TypeSafe.</p>
+      </div>
+    </footer>
+  </body>
+</html>
