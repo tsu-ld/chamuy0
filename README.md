@@ -4,6 +4,8 @@ A small Firefox and Chrome extension that scores every post in your LinkedIn fee
 
 **LinkedIn only for now.** More platforms are planned, but today the extension runs on LinkedIn.
 
+**In review.** Submitted to the Chrome Web Store and addons.mozilla.org. Until the listings are live, install from the release zip below.
+
 ![The chip and the breakdown](docs/feed.png)
 
 ## What you get
