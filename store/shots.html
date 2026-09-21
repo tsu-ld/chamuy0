@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>chamuy0 — store &amp; README shot compositions</title>
+    <!--
+      Store screenshots + README images, composed from the real components
+      (markup mirrors extension/badge.ts, extension/hide.ts, extension/popup.html;
+      styles come from the linked extension/badge.css). Post skeleton styles
+      mirror dev/preview.html; feed card styles mirror dev/fixture-feed.html.
+      Fixture posts are the repo's own English training examples.
+
+      Open without a hash for a labelled contact sheet. Open with #<name>
+      to isolate one shot at exact output size (animations frozen).
+
+      RENDER (any chrome-headless-shell / chromium works):
+        BIN="$HOME/.cache/ms-playwright/chromium_headless_shell-1246/chrome-headless-shell-linux64/chrome-headless-shell"
+        shot() { "$BIN" --headless --disable-gpu --hide-scrollbars --force-device-scale-factor=1 \
+                 --virtual-time-budget=3000 --window-size="$2" --screenshot="$3" \
+                 "file://$PWD/store/shots.html#$1"; }
+        shot 01-comparison 1280,800  store/screenshots/01-comparison.png
+        shot 02-feed       1280,800  store/screenshots/02-feed.png
+        shot 03-signals    1280,800  store/screenshots/03-signals.png
+        shot 04-setup      1280,800  store/screenshots/04-setup.png
+        shot 05-banish     1280,800  store/screenshots/05-banish.png
+        shot readme-feed   1600,1000 docs/feed.png
+        shot readme-chips  1600,140  docs/chips.png
+        shot readme-popup  768,1600  docs/popup.png
+        shot og            1200,630  site/og.png
+        shot apple-icon    180,180   site/apple-touch-icon.png
+    -->
+    <link rel="stylesheet" href="../extension/badge.css" />
+    <style>
+      :root { color-scheme: light; }
+      body { margin: 0; }
+
+      /* Light tokens pinned on the scope, same values badge.css uses for light.
+         Insurance: keep the options panel light even under a dark OS theme. */
+      .sh-scope {
+        --lnslop-canvas: #f3f2ef;
+        --lnslop-surface: #fff;
+        --lnslop-hairline: rgba(0, 0, 0, .15);
+        --lnslop-hairline-soft: rgba(0, 0, 0, .08);
+        --lnslop-ink: rgba(0, 0, 0, .9);
+        --lnslop-ink-soft: rgba(0, 0, 0, .6);
+        --lnslop-hover: rgba(0, 0, 0, .08);
+        --lnslop-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+        --lnslop-positive: #057642;
+        --lnslop-caution: #915907;
+        --lnslop-negative: #b24020;
+        --lnslop-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --lnslop-mono: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+        --lnslop-ease: cubic-bezier(.2, 0, 0, 1);
+        background: var(--lnslop-canvas);
+      }
+      @media (prefers-color-scheme: dark) {
+        .sh-scope .lnslop-options {
+          --lnslop-canvas: #f3f2ef;
+          --lnslop-surface: #fff;
+          --lnslop-hairline: rgba(0, 0, 0, .15);
+          --lnslop-hairline-soft: rgba(0, 0, 0, .08);
+          --lnslop-ink: rgba(0, 0, 0, .9);
+          --lnslop-ink-soft: rgba(0, 0, 0, .6);
+          --lnslop-hover: rgba(0, 0, 0, .08);
+          --lnslop-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+          --lnslop-positive: #057642;
+          --lnslop-caution: #915907;
+          --lnslop-negative: #b24020;
+        }
+      }
+
+      .sh-shot {
+        position: relative;
+        overflow: hidden;
+        background: var(--lnslop-canvas);
+        color: var(--lnslop-ink);
+        font: 400 14px/1.45 var(--lnslop-font);
+      }
+      .sh-store { inline-size: 1280px; block-size: 800px; }
+
+      /* Shot mode: isolate one shot, freeze all animation for a deterministic still. */
+      html.shot [data-shot][hidden] { display: none; }
+      html.shot *, html.shot *::before, html.shot *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+
+      /* Contact sheet mode (no hash): scaled down, labelled. */
+      html:not(.shot) body { padding: 40px 0; }
+      html:not(.shot) .sh-shot { margin: 0 auto 16px; zoom: .5; outline: 1px solid var(--lnslop-hairline); }
+      .sh-caption {
+        max-inline-size: 640px;
+        margin: 0 auto 8px;
+        font: 500 13px/1 var(--lnslop-mono);
+        color: var(--lnslop-ink-soft);
+      }
+
+      /* Store furniture: headline + subcaption + footer. Not part of the UI. */
+      .sh-head { position: absolute; inset-block-start: 56px; inset-inline-start: 64px; z-index: 5; }
+      .sh-headline {
+        font: 650 46px/1.08 var(--lnslop-font);
+        letter-spacing: -.01em;
+        font-variant-numeric: tabular-nums;
+      }
+      .sh-sub { margin-block-start: 12px; font-size: 24px; line-height: 1.3; color: var(--lnslop-ink-soft); }
+      .sh-foot {
+        position: absolute;
+        inset-block-end: 22px;
+        inset-inline-start: 64px;
+        z-index: 5;
+        font: 400 13px/1 var(--lnslop-mono);
+        color: var(--lnslop-ink-soft);
+      }
+
+      .sh-col { position: absolute; }
+      /* zoom on the children, not the positioned column: keeps offsets in canvas px */
+      .sh-z > * { zoom: var(--sh-z, 1); }
+
+      /* Feed card with text, modelled on dev/fixture-feed.html */
+      .sh-card {
+        box-sizing: border-box;
+        position: relative;
+        inline-size: 430px;
+        padding: 12px 16px;
+        border: 1px solid var(--lnslop-hairline);
+        border-radius: 8px;
+        background: var(--lnslop-surface);
+      }
+      .sh-author { margin: 0 0 6px; font-weight: 600; }
+      .sh-text p { margin: 0; }
+      .sh-text p + p { margin-block-start: 10px; }
+      .sh-bar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-block-start: 12px;
+        padding-block-start: 8px;
+        border-block-start: 1px solid var(--lnslop-hairline-soft);
+      }
+      .sh-act { color: var(--lnslop-ink-soft); font-size: 13px; font-weight: 600; }
+
+      /* Skeleton post, modelled on dev/preview.html .pv-post */
+      .sh-post {
+        box-sizing: border-box;
+        position: relative;
+        inline-size: 430px;
+        padding: 12px 16px 10px;
+        border: 1px solid var(--lnslop-hairline);
+        border-radius: 8px;
+        background: var(--lnslop-surface);
+      }
+      .sh-posthead { display: flex; gap: 10px; align-items: center; }
+      .sh-avatar {
+        flex: none;
+        inline-size: 48px;
+        block-size: 48px;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--lnslop-ink) 14%, transparent);
+      }
+      .sh-id i, .sh-lines i {
+        display: block;
+        block-size: 8px;
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--lnslop-ink) 12%, transparent);
+      }
+      .sh-id i:first-child {
+        inline-size: 132px;
+        block-size: 9px;
+        background: color-mix(in srgb, var(--lnslop-ink) 22%, transparent);
+      }
+      .sh-id i + i { margin-block-start: 6px; inline-size: 74px; }
+      .sh-lines { margin-block-start: 14px; }
+      .sh-lines i + i { margin-block-start: 8px; }
+      .sh-lines i:last-child { inline-size: 58%; }
+      .sh-actions {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-block-start: 14px;
+        padding-block-start: 8px;
+        border-block-start: 1px solid var(--lnslop-hairline-soft);
+      }
+      .sh-actions i {
+        inline-size: 44px;
+        block-size: 8px;
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--lnslop-ink) 12%, transparent);
+      }
+
+      /* Shot 03: the eight tells as an annotation legend (store furniture,
+         not UI — the real popover only lists fired signals in its reason line). */
+      .sh-legend { position: absolute; z-index: 5; }
+      .sh-legend-head {
+        margin: 0 0 14px;
+        font: 500 15px/1 var(--lnslop-mono);
+        letter-spacing: .04em;
+        color: var(--lnslop-ink-soft);
+        font-variant-numeric: tabular-nums;
+      }
+      .sh-legend ul { margin: 0; padding: 0; list-style: none; }
+      .sh-legend li {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        block-size: 46px;
+        border-block-end: 1px solid var(--lnslop-hairline-soft);
+        font-size: 22px;
+      }
+      .sh-legend li:last-child { border-block-end: 0; }
+      .sh-legend .sh-tell { flex: none; inline-size: 9px; block-size: 9px; border-radius: 50%; }
+      .sh-legend li.sh-fired { font-weight: 550; }
+      .sh-legend li.sh-fired .sh-tell { background: var(--lnslop-negative); }
+      .sh-legend li.sh-quiet { color: var(--lnslop-ink-soft); }
+      .sh-legend li.sh-quiet .sh-tell { background: color-mix(in srgb, var(--lnslop-ink) 22%, transparent); }
+
+      /* Shot 05: stamp frozen at its 150ms peak (lnslop-stamp 100% keyframe,
+         pinned because shot mode kills the animation). */
+      .sh-peak.lnslop-banish::after {
+        opacity: 1;
+        font-size: 96px;
+        transform: translate(-50%, -50%) rotate(-14deg) scale(1);
+      }
+      .sh-framelabel {
+        position: absolute;
+        inset-block-start: 292px;
+        z-index: 5;
+        inline-size: 559px;
+        text-align: center;
+        font: 400 16px/1 var(--lnslop-mono);
+        color: var(--lnslop-ink-soft);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .sh-note { position: absolute; z-index: 5; font-size: 16px; color: var(--lnslop-ink-soft); }
+
+      /* README chip strip */
+      .sh-strip { block-size: 140px; display: flex; align-items: center; justify-content: space-evenly; padding-inline: 56px; }
+      .sh-cell { display: inline-flex; align-items: center; }
+      .sh-minihost {
+        box-sizing: border-box;
+        position: relative;
+        display: block;
+        inline-size: 132px;
+        block-size: 58px;
+        border: 1px solid var(--lnslop-hairline);
+        border-radius: 8px;
+        background: var(--lnslop-surface);
+      }
+    </style>
+  </head>
+  <body class="sh-scope">
+
+    <!-- ============ store 1/5: comparison hero ============ -->
+    <section data-shot="01-comparison" class="sh-shot sh-store">
+      <header class="sh-head">
+        <h1 class="sh-headline">8.4 slop. 1.6 clean.</h1>
+        <p class="sh-sub">Red is slop. Green is worth reading.</p>
+      </header>
+
+      <div class="sh-col sh-z" style="inset-inline-start: 64px; inset-block-start: 330px; --sh-z: 1.3">
+        <article class="sh-post lnslop-host">
+          <header class="sh-posthead">
+            <span class="sh-avatar"></span>
+            <span class="sh-id"><i></i><i></i></span>
+          </header>
+          <div class="sh-lines"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <footer class="sh-actions">
+            <i></i><i></i><i></i><i></i>
+            <button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="true"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button>
+          </footer>
+          <div class="lnslop-popover" role="dialog" aria-label="Slop analysis">
+            <header class="lnslop-head">
+              <strong class="lnslop-verdict lnslop-bad"><span class="lnslop-dot" aria-hidden="true"></span>Slop 8.4/10</strong>
+              <button type="button" class="lnslop-close" aria-label="Close">×</button>
+            </header>
+            <p class="lnslop-reason">Reads like: Engagement bait, Rage bait, Broetry, Fabricated story, Manufactured hook.</p>
+            <div class="lnslop-train">
+              <span class="lnslop-train-label">Was this right?</span>
+              <button type="button" class="lnslop-vote lnslop-vote-clean">clean</button>
+              <button type="button" class="lnslop-vote lnslop-vote-borderline">borderline</button>
+              <button type="button" class="lnslop-vote lnslop-vote-slop">slop</button>
+            </div>
+            <p class="lnslop-meta">jev-1.13.0 · 3 examples</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="sh-col sh-z" style="inset-inline-start: 657px; inset-block-start: 330px; --sh-z: 1.3">
+        <article class="sh-post lnslop-host">
+          <header class="sh-posthead">
+            <span class="sh-avatar"></span>
+            <span class="sh-id"><i></i><i></i></span>
+          </header>
+          <div class="sh-lines"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <footer class="sh-actions">
+            <i></i><i></i><i></i><i></i>
+            <button type="button" class="lnslop-chip lnslop-good" aria-label="Slop 1.6 of 10, clean. View detail." aria-expanded="true"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">1.6</span></button>
+          </footer>
+          <div class="lnslop-popover" role="dialog" aria-label="Slop analysis">
+            <header class="lnslop-head">
+              <strong class="lnslop-verdict lnslop-good"><span class="lnslop-dot" aria-hidden="true"></span>Slop 1.6/10</strong>
+              <button type="button" class="lnslop-close" aria-label="Close">×</button>
+            </header>
+            <p class="lnslop-reason">No bait signals fired.</p>
+            <div class="lnslop-train">
+              <span class="lnslop-train-label">Was this right?</span>
+              <button type="button" class="lnslop-vote lnslop-vote-clean">clean</button>
+              <button type="button" class="lnslop-vote lnslop-vote-borderline">borderline</button>
+              <button type="button" class="lnslop-vote lnslop-vote-slop">slop</button>
+            </div>
+            <p class="lnslop-meta">jev-1.13.0 · 3 examples</p>
+          </div>
+        </article>
+      </div>
+
+      <p class="sh-foot">chamuy0 · slop scores for LinkedIn</p>
+    </section>
+
+    <!-- ============ store 2/5: feed ============ -->
+    <section data-shot="02-feed" class="sh-shot sh-store">
+      <header class="sh-head">
+        <h1 class="sh-headline">Every post, scored.</h1>
+        <p class="sh-sub">Engagement bait, broetry, fabricated story.</p>
+      </header>
+
+      <div class="sh-col sh-z" style="inset-inline-start: 371px; inset-block-start: 196px; --sh-z: 1.25">
+        <article class="sh-card lnslop-host" style="margin-block-end: 16px">
+          <p class="sh-author">Jordan Blake</p>
+          <div class="sh-text">
+            <p>I interviewed a janitor at 5am.</p>
+            <p>He looked me in the eyes and said: "success is rented, not owned."</p>
+            <p>That conversation changed how I lead.</p>
+            <p>Agree?</p>
+          </div>
+          <div class="sh-bar">
+            <span class="sh-act">Like</span><span class="sh-act">Comment</span><span class="sh-act">Repost</span>
+            <button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button>
+          </div>
+        </article>
+        <article class="sh-card lnslop-host" style="margin-block-end: 16px">
+          <p class="sh-author">Casey Liu</p>
+          <div class="sh-text">
+            <p>Excited to share our Q3 numbers. Growth mindset, relentless execution, and a team that never stops. Grateful for the journey.</p>
+          </div>
+          <div class="sh-bar">
+            <span class="sh-act">Like</span><span class="sh-act">Comment</span><span class="sh-act">Repost</span>
+            <button type="button" class="lnslop-chip lnslop-meh" aria-label="Slop 4.7 of 10, borderline. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">4.7</span></button>
+          </div>
+        </article>
+        <article class="sh-card lnslop-host">
+          <p class="sh-author">Sam Okafor</p>
+          <div class="sh-text">
+            <p>We cut p95 latency from 840ms to 210ms by moving the session cache in-process. Writeup with flame graphs in the comments.</p>
+          </div>
+          <div class="sh-bar">
+            <span class="sh-act">Like</span><span class="sh-act">Comment</span><span class="sh-act">Repost</span>
+            <button type="button" class="lnslop-chip lnslop-good" aria-label="Slop 2.0 of 10, clean. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">2.0</span></button>
+          </div>
+        </article>
+      </div>
+
+      <p class="sh-foot">chamuy0 · slop scores for LinkedIn</p>
+    </section>
+
+    <!-- ============ store 3/5: signals ============ -->
+    <section data-shot="03-signals" class="sh-shot sh-store">
+      <header class="sh-head">
+        <h1 class="sh-headline">Eight tells. One score.</h1>
+      </header>
+
+      <div class="sh-col sh-z sh-popzoom" style="inset-inline-start: 64px; inset-block-start: 260px; --sh-z: 1.5">
+        <article class="sh-card lnslop-host">
+          <p class="sh-author">Jordan Blake</p>
+          <div class="sh-text">
+            <p>I interviewed a janitor at 5am.</p>
+            <p>He looked me in the eyes and said: "success is rented, not owned."</p>
+            <p>That conversation changed how I lead.</p>
+            <p>Agree?</p>
+          </div>
+          <div class="sh-bar">
+            <span class="sh-act">Like</span><span class="sh-act">Comment</span><span class="sh-act">Repost</span>
+            <button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="true"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button>
+          </div>
+          <div class="lnslop-popover" role="dialog" aria-label="Slop analysis">
+            <header class="lnslop-head">
+              <strong class="lnslop-verdict lnslop-bad"><span class="lnslop-dot" aria-hidden="true"></span>Slop 8.4/10</strong>
+              <button type="button" class="lnslop-close" aria-label="Close">×</button>
+            </header>
+            <p class="lnslop-reason">Reads like: Engagement bait, Rage bait, Broetry, Fabricated story, Manufactured hook.</p>
+            <div class="lnslop-train">
+              <span class="lnslop-train-label">Was this right?</span>
+              <button type="button" class="lnslop-vote lnslop-vote-clean">clean</button>
+              <button type="button" class="lnslop-vote lnslop-vote-borderline">borderline</button>
+              <button type="button" class="lnslop-vote lnslop-vote-slop">slop</button>
+            </div>
+            <p class="lnslop-meta">jev-1.13.0 · 3 examples</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="sh-legend" style="inset-inline-start: 780px; inset-block-start: 258px; inline-size: 436px">
+        <p class="sh-legend-head">8 signals · 5 fired</p>
+        <ul>
+          <li class="sh-fired"><span class="sh-tell"></span>Engagement bait</li>
+          <li class="sh-quiet"><span class="sh-tell"></span>Humblebrag</li>
+          <li class="sh-quiet"><span class="sh-tell"></span>AI generic</li>
+          <li class="sh-quiet"><span class="sh-tell"></span>Corporate buzzwords</li>
+          <li class="sh-fired"><span class="sh-tell"></span>Broetry</li>
+          <li class="sh-fired"><span class="sh-tell"></span>Fabricated story</li>
+          <li class="sh-fired"><span class="sh-tell"></span>Manufactured hook</li>
+          <li class="sh-fired"><span class="sh-tell"></span>Rage bait</li>
+        </ul>
+      </div>
+
+      <p class="sh-foot">chamuy0 · slop scores for LinkedIn</p>
+    </section>
+
+    <!-- ============ store 4/5: setup ============ -->
+    <section data-shot="04-setup" class="sh-shot sh-store">
+      <div class="sh-z" style="position: absolute; inset-inline-start: 32px; inset-block-start: 12px; --sh-z: 0.95">
+        <div class="lnslop-options">
+          <main class="lnslop-panel">
+            <h1>chamuy0</h1>
+            <p class="lnslop-lede">
+              One quick step and you are done. Your API key and your training
+              labels never leave this browser profile.
+            </p>
+
+            <section aria-labelledby="lnslop-key-h-a">
+              <h2 id="lnslop-key-h-a">Step 1. TypeSafe API key</h2>
+              <p class="lnslop-lede">
+                Paste your key from the TypeSafe console. Save, then open or reload
+                linkedin.com.
+              </p>
+              <form id="key-form-a" class="lnslop-field">
+                <label for="api-key-a">TypeSafe API key</label>
+                <div class="lnslop-inline">
+                  <input id="api-key-a" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key" value="ts_k1_9f3Kx7Qm2LwP4r8ZnB" />
+                  <button type="submit">Save</button>
+                </div>
+                <p id="key-status-a" class="lnslop-status" role="status">Saved. Open or reload linkedin.com to classify with it.</p>
+              </form>
+            </section>
+
+            <section aria-labelledby="lnslop-hide-h-a">
+              <h2 id="lnslop-hide-h-a">Feed cleanup</h2>
+              <form id="hide-form-a" class="lnslop-field">
+                <div class="lnslop-inline">
+                  <input id="hide-enabled-a" type="checkbox" checked />
+                  <label for="hide-enabled-a">Hide posts scoring</label>
+                  <input id="hide-threshold-a" type="range" min="0" max="10" step="0.5" value="6.5" />
+                  <output id="hide-value-a" for="hide-threshold-a">6.5</output>
+                </div>
+                <p id="hide-status-a" class="lnslop-status" role="status">Reads like: at or above 6.5, the post collapses to a marker. Show brings it back.</p>
+              </form>
+            </section>
+
+            <section aria-labelledby="lnslop-train-h-a">
+              <h2 id="lnslop-train-h-a">Training examples</h2>
+              <p class="lnslop-lede">
+                Label posts from the popover on any LinkedIn post. The classifier
+                calibrates with your latest two examples per label.
+              </p>
+              <p id="training-count-a" class="lnslop-status" role="status">3 examples stored, newest first.</p>
+              <ul id="training-list-a" class="lnslop-examples">
+                <li class="lnslop-example">
+                  <span class="lnslop-tag lnslop-tag-slop">slop</span>
+                  <span class="lnslop-example-text">I interviewed a janitor at 5am. He looked me in the eyes and said: "success is rented, not owned." That conversation changed how I lead. Agree?</span>
+                </li>
+                <li class="lnslop-example">
+                  <span class="lnslop-tag lnslop-tag-borderline">borderline</span>
+                  <span class="lnslop-example-text">Excited to share our Q3 numbers. Growth mindset, relentless execution, and a team that never stops. Grateful for the journey.</span>
+                </li>
+                <li class="lnslop-example">
+                  <span class="lnslop-tag lnslop-tag-clean">clean</span>
+                  <span class="lnslop-example-text">We cut p95 latency from 840ms to 210ms by moving the session cache in-process. Writeup with flame graphs in the comments.</span>
+                </li>
+              </ul>
+            </section>
+          </main>
+        </div>
+      </div>
+
+      <header class="sh-head" style="inset-inline-start: 560px">
+        <h1 class="sh-headline">It learns your taste.</h1>
+        <p class="sh-sub">Bring a TypeSafe key.</p>
+      </header>
+
+      <div class="sh-col sh-z" style="inset-inline-start: 560px; inset-block-start: 316px; --sh-z: 1.15">
+        <article class="sh-post lnslop-host">
+          <header class="sh-posthead">
+            <span class="sh-avatar"></span>
+            <span class="sh-id"><i></i><i></i></span>
+          </header>
+          <div class="sh-lines"><i></i><i></i><i></i></div>
+          <footer class="sh-actions">
+            <i></i><i></i><i></i><i></i>
+            <button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="true"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button>
+          </footer>
+          <div class="lnslop-popover" role="dialog" aria-label="Slop analysis">
+            <header class="lnslop-head">
+              <strong class="lnslop-verdict lnslop-bad"><span class="lnslop-dot" aria-hidden="true"></span>Slop 8.4/10</strong>
+              <button type="button" class="lnslop-close" aria-label="Close">×</button>
+            </header>
+            <p class="lnslop-reason">Reads like: Engagement bait, Rage bait, Broetry, Fabricated story, Manufactured hook.</p>
+            <div class="lnslop-train">
+              <span class="lnslop-train-label">Was this right?</span>
+              <button type="button" class="lnslop-vote lnslop-vote-clean">clean</button>
+              <button type="button" class="lnslop-vote lnslop-vote-borderline">borderline</button>
+              <button type="button" class="lnslop-vote lnslop-vote-slop">slop</button>
+            </div>
+            <p class="lnslop-meta">jev-1.13.0 · 3 examples</p>
+          </div>
+        </article>
+      </div>
+
+      <p class="sh-note" style="inset-inline-start: 560px; inset-block-start: 548px">Labels train the next score.</p>
+      <p class="sh-foot" style="inset-inline-start: 560px">chamuy0 · slop scores for LinkedIn</p>
+    </section>
+
+    <!-- ============ store 5/5: banish ============ -->
+    <section data-shot="05-banish" class="sh-shot sh-store">
+      <header class="sh-head">
+        <h1 class="sh-headline">Banish the worst. Nothing is deleted.</h1>
+      </header>
+
+      <p class="sh-framelabel" style="inset-inline-start: 64px">150 ms</p>
+      <p class="sh-framelabel" style="inset-inline-start: 657px">600 ms</p>
+
+      <div class="sh-col sh-z" style="inset-inline-start: 64px; inset-block-start: 330px; --sh-z: 1.3">
+        <article class="sh-card lnslop-host lnslop-banish sh-peak">
+          <p class="sh-author">Jordan Blake</p>
+          <div class="sh-text">
+            <p>I interviewed a janitor at 5am.</p>
+            <p>He looked me in the eyes and said: "success is rented, not owned."</p>
+            <p>That conversation changed how I lead.</p>
+            <p>Agree?</p>
+          </div>
+          <div class="sh-bar">
+            <span class="sh-act">Like</span><span class="sh-act">Comment</span><span class="sh-act">Repost</span>
+            <button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button>
+          </div>
+        </article>
+      </div>
+
+      <div class="sh-col sh-z" style="inset-inline-start: 657px; inset-block-start: 330px; --sh-z: 1.3">
+        <article class="sh-card lnslop-host lnslop-hidden">
+          <p class="sh-author">Jordan Blake</p>
+          <div class="sh-text">
+            <p>I interviewed a janitor at 5am.</p>
+            <p>He looked me in the eyes and said: "success is rented, not owned."</p>
+            <p>That conversation changed how I lead.</p>
+            <p>Agree?</p>
+          </div>
+          <div class="sh-bar">
+            <span class="sh-act">Like</span><span class="sh-act">Comment</span><span class="sh-act">Repost</span>
+            <button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button>
+          </div>
+          <div class="lnslop-tomb" role="group" aria-label="Post hidden. Slop score 8.4 of 10.">
+            <span class="lnslop-tomb-text">Slop 8.4 · hidden</span>
+            <button type="button" class="lnslop-show">Show</button>
+          </div>
+        </article>
+      </div>
+
+      <p class="sh-foot">chamuy0 · slop scores for LinkedIn</p>
+    </section>
+
+    <!-- ============ README: feed (comparison, different crop than hero) ============ -->
+    <section data-shot="readme-feed" class="sh-shot" style="inline-size: 1600px; block-size: 1000px; background: var(--lnslop-surface)">
+      <div class="sh-col sh-z" style="inset-inline-start: 780px; inset-block-start: 170px; --sh-z: 1.45; z-index: 1">
+        <article class="sh-card lnslop-host">
+          <p class="sh-author">Sam Okafor</p>
+          <div class="sh-text">
+            <p>We cut p95 latency from 840ms to 210ms by moving the session cache in-process. Writeup with flame graphs in the comments.</p>
+          </div>
+          <div class="sh-bar">
+            <span class="sh-act">Like</span><span class="sh-act">Comment</span><span class="sh-act">Repost</span>
+            <button type="button" class="lnslop-chip lnslop-good" aria-label="Slop 1.6 of 10, clean. View detail." aria-expanded="true"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">1.6</span></button>
+          </div>
+          <div class="lnslop-popover" role="dialog" aria-label="Slop analysis">
+            <header class="lnslop-head">
+              <strong class="lnslop-verdict lnslop-good"><span class="lnslop-dot" aria-hidden="true"></span>Slop 1.6/10</strong>
+              <button type="button" class="lnslop-close" aria-label="Close">×</button>
+            </header>
+            <p class="lnslop-reason">No bait signals fired.</p>
+            <div class="lnslop-train">
+              <span class="lnslop-train-label">Was this right?</span>
+              <button type="button" class="lnslop-vote lnslop-vote-clean">clean</button>
+              <button type="button" class="lnslop-vote lnslop-vote-borderline">borderline</button>
+              <button type="button" class="lnslop-vote lnslop-vote-slop">slop</button>
+            </div>
+            <p class="lnslop-meta">jev-1.13.0 · 3 examples</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="sh-col sh-z" style="inset-inline-start: 200px; inset-block-start: 500px; --sh-z: 1.45; z-index: 2">
+        <article class="sh-card lnslop-host">
+          <p class="sh-author">Jordan Blake</p>
+          <div class="sh-text">
+            <p>I interviewed a janitor at 5am.</p>
+            <p>He looked me in the eyes and said: "success is rented, not owned."</p>
+            <p>That conversation changed how I lead.</p>
+            <p>Agree?</p>
+          </div>
+          <div class="sh-bar">
+            <span class="sh-act">Like</span><span class="sh-act">Comment</span><span class="sh-act">Repost</span>
+            <button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="true"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button>
+          </div>
+          <div class="lnslop-popover" role="dialog" aria-label="Slop analysis">
+            <header class="lnslop-head">
+              <strong class="lnslop-verdict lnslop-bad"><span class="lnslop-dot" aria-hidden="true"></span>Slop 8.4/10</strong>
+              <button type="button" class="lnslop-close" aria-label="Close">×</button>
+            </header>
+            <p class="lnslop-reason">Reads like: Engagement bait, Rage bait, Broetry, Fabricated story, Manufactured hook.</p>
+            <div class="lnslop-train">
+              <span class="lnslop-train-label">Was this right?</span>
+              <button type="button" class="lnslop-vote lnslop-vote-clean">clean</button>
+              <button type="button" class="lnslop-vote lnslop-vote-borderline">borderline</button>
+              <button type="button" class="lnslop-vote lnslop-vote-slop">slop</button>
+            </div>
+            <p class="lnslop-meta">jev-1.13.0 · 3 examples</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ README: chip-state strip ============ -->
+    <section data-shot="readme-chips" class="sh-shot" style="inline-size: 1600px; block-size: 140px; background: var(--lnslop-surface)">
+      <div class="sh-strip">
+        <span class="sh-cell" style="zoom: 2">
+          <button type="button" class="lnslop-chip lnslop-pending" aria-label="Analyzing post for slop" aria-expanded="false" aria-busy="true"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">…</span></button>
+        </span>
+        <span class="sh-cell" style="zoom: 2">
+          <button type="button" class="lnslop-chip lnslop-good" aria-label="Slop 2.0 of 10, clean. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">2.0</span></button>
+        </span>
+        <span class="sh-cell" style="zoom: 2">
+          <button type="button" class="lnslop-chip lnslop-meh" aria-label="Slop 4.7 of 10, borderline. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">4.7</span></button>
+        </span>
+        <span class="sh-cell" style="zoom: 2">
+          <button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button>
+        </span>
+        <span class="sh-cell" style="zoom: 2">
+          <button type="button" class="lnslop-chip lnslop-error" aria-label="Could not classify. Press to retry." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">?</span></button>
+        </span>
+        <span class="sh-cell" style="zoom: 2">
+          <span class="sh-minihost lnslop-host">
+            <button type="button" class="lnslop-chip lnslop-bad" data-lnslop-floating="true" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="false"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button>
+          </span>
+        </span>
+      </div>
+    </section>
+
+    <!-- ============ README: settings popup ============ -->
+    <section data-shot="readme-popup" class="sh-shot lnslop-options" style="inline-size: 768px; block-size: 1600px">
+      <div style="zoom: 2">
+        <main class="lnslop-panel">
+          <h1>chamuy0</h1>
+          <p class="lnslop-lede">
+            One quick step and you are done. Your API key and your training
+            labels never leave this browser profile.
+          </p>
+
+          <section aria-labelledby="lnslop-key-h">
+            <h2 id="lnslop-key-h">Step 1. TypeSafe API key</h2>
+            <p class="lnslop-lede">
+              Paste your key from the TypeSafe console. Save, then open or reload
+              linkedin.com.
+            </p>
+            <form id="key-form" class="lnslop-field">
+              <label for="api-key">TypeSafe API key</label>
+              <div class="lnslop-inline">
+                <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key" value="ts_k1_9f3Kx7Qm2LwP4r8ZnB" />
+                <button type="submit">Save</button>
+              </div>
+              <p id="key-status" class="lnslop-status" role="status">Saved. Open or reload linkedin.com to classify with it.</p>
+            </form>
+          </section>
+
+          <section aria-labelledby="lnslop-hide-h">
+            <h2 id="lnslop-hide-h">Feed cleanup</h2>
+            <form id="hide-form" class="lnslop-field">
+              <div class="lnslop-inline">
+                <input id="hide-enabled" type="checkbox" checked />
+                <label for="hide-enabled">Hide posts scoring</label>
+                <input id="hide-threshold" type="range" min="0" max="10" step="0.5" value="6.5" />
+                <output id="hide-value" for="hide-threshold">6.5</output>
+              </div>
+              <p id="hide-status" class="lnslop-status" role="status">Reads like: at or above 6.5, the post collapses to a marker. Show brings it back.</p>
+            </form>
+          </section>
+
+          <section aria-labelledby="lnslop-train-h">
+            <h2 id="lnslop-train-h">Training examples</h2>
+            <p class="lnslop-lede">
+              Label posts from the popover on any LinkedIn post. The classifier
+              calibrates with your latest two examples per label.
+            </p>
+            <p id="training-count" class="lnslop-status" role="status">3 examples stored, newest first.</p>
+            <ul id="training-list" class="lnslop-examples">
+              <li class="lnslop-example">
+                <span class="lnslop-tag lnslop-tag-slop">slop</span>
+                <span class="lnslop-example-text">I interviewed a janitor at 5am. He looked me in the eyes and said: "success is rented, not owned." That conversation changed how I lead. Agree?</span>
+              </li>
+              <li class="lnslop-example">
+                <span class="lnslop-tag lnslop-tag-borderline">borderline</span>
+                <span class="lnslop-example-text">Excited to share our Q3 numbers. Growth mindset, relentless execution, and a team that never stops. Grateful for the journey.</span>
+              </li>
+              <li class="lnslop-example">
+                <span class="lnslop-tag lnslop-tag-clean">clean</span>
+                <span class="lnslop-example-text">We cut p95 latency from 840ms to 210ms by moving the session cache in-process. Writeup with flame graphs in the comments.</span>
+              </li>
+            </ul>
+          </section>
+        </main>
+      </div>
+    </section>
+
+    <!-- ============ site: og image 1200x630 ============ -->
+    <section data-shot="og" class="sh-shot" style="inline-size: 1200px; block-size: 630px">
+      <div style="position: absolute; inset-inline-start: 64px; inset-block-start: 56px; display: flex; align-items: center; gap: 14px">
+        <img src="../extension/icons/icon.svg" alt="" width="44" height="44" />
+        <span style="font: 650 30px/1 var(--lnslop-font); letter-spacing: -.01em">chamuy0</span>
+      </div>
+
+      <p style="position: absolute; inset-inline-start: 64px; inset-block-start: 176px; margin: 0; font: 500 17px/1.4 var(--lnslop-mono); color: var(--lnslop-ink-soft)">Chrome + Firefox extension · MIT · LinkedIn only</p>
+      <h1 style="position: absolute; inset-inline-start: 64px; inset-block-start: 214px; margin: 0; inline-size: 560px; font: 650 62px/1.05 var(--lnslop-font); letter-spacing: -.015em">Engagement bait,<br />scored out of 10.</h1>
+      <p style="position: absolute; inset-inline-start: 64px; inset-block-start: 388px; margin: 0; inline-size: 480px; font-size: 22px; line-height: 1.4; color: var(--lnslop-ink-soft)">A chip on every post. Click it for the why. Banish the rest.</p>
+      <p style="position: absolute; inset-inline-start: 64px; inset-block-end: 44px; margin: 0; font: 400 15px/1 var(--lnslop-mono); color: var(--lnslop-ink-soft)">github.com/tsu-ld/chamuy0</p>
+
+      <div class="sh-col sh-z" style="inset-inline-start: 648px; inset-block-start: 168px; --sh-z: 1.28">
+        <article class="sh-card lnslop-host">
+          <p class="sh-author">Jordan Blake</p>
+          <div class="sh-text">
+            <p>I interviewed a janitor at 5am.</p>
+            <p>He looked me in the eyes and said: "success is rented, not owned."</p>
+            <p>That conversation changed how I lead.</p>
+            <p>Agree?</p>
+          </div>
+          <div class="sh-bar">
+            <span class="sh-act">Like</span><span class="sh-act">Comment</span><span class="sh-act">Repost</span>
+            <button type="button" class="lnslop-chip lnslop-bad" aria-label="Slop 8.4 of 10, slop. View detail." aria-expanded="true"><span class="lnslop-dot" aria-hidden="true"></span><span class="lnslop-word">Slop</span><span class="lnslop-num">8.4</span></button>
+          </div>
+          <div class="lnslop-popover" role="dialog" aria-label="Slop analysis">
+            <header class="lnslop-head">
+              <strong class="lnslop-verdict lnslop-bad"><span class="lnslop-dot" aria-hidden="true"></span>Slop 8.4/10</strong>
+              <button type="button" class="lnslop-close" aria-label="Close">×</button>
+            </header>
+            <p class="lnslop-reason">Reads like: Engagement bait, Rage bait, Broetry, Fabricated story, Manufactured hook.</p>
+            <div class="lnslop-train">
+              <span class="lnslop-train-label">Was this right?</span>
+              <button type="button" class="lnslop-vote lnslop-vote-clean">clean</button>
+              <button type="button" class="lnslop-vote lnslop-vote-borderline">borderline</button>
+              <button type="button" class="lnslop-vote lnslop-vote-slop">slop</button>
+            </div>
+            <p class="lnslop-meta">jev-1.13.0 · 3 examples</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ site: apple touch icon 180x180 ============ -->
+    <section data-shot="apple-icon" class="sh-shot" style="inline-size: 180px; block-size: 180px; background: #b24020">
+      <img src="../extension/icons/icon.svg" alt="" width="180" height="180" style="display: block" />
+    </section>
+
+    <script>
+      const sections = [...document.querySelectorAll('[data-shot]')]
+
+      function route() {
+        const id = decodeURIComponent(location.hash.slice(1))
+        const target = sections.find((s) => s.dataset.shot === id)
+        document.documentElement.classList.toggle('shot', Boolean(target))
+        for (const s of sections) s.hidden = Boolean(target) && s !== target
+      }
+
+      addEventListener('hashchange', route)
+      route()
+
+      if (!location.hash) {
+        for (const s of sections) {
+          const caption = document.createElement('p')
+          caption.className = 'sh-caption'
+          caption.textContent = `#${s.dataset.shot}`
+          s.before(caption)
+        }
+      }
+    </script>
+  </body>
+</html>

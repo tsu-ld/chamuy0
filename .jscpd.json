@@ -8,6 +8,7 @@
     "**/fixtures/**",
     "**/training/**",
     "**/dev/preview.html",
+    "**/store/shots.html",
     "**/*.md"
   ]
 }
