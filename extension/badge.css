@@ -406,7 +406,7 @@
 .lnslop-banish.lnslop-fall .lnslop-tomb { opacity: 1; }
 
 .lnslop-banish::after {
-  content: "\2622";
+  content: "\2623";
   position: absolute;
   inset-block-start: 24%;
   inset-inline-start: 50%;

@@ -4,7 +4,7 @@ cd "$(dirname "$0")/.."
 
 version="$(sed -n 's/^  "version": "\([^"]*\)",$/\1/p' extension/manifest.json)"
 out="dist/chamuy0-${version}.zip"
-files=(manifest.json badge.css popup.html dist)
+files=(manifest.json badge.css popup.html dist icons)
 for file in "${files[@]}"; do
 	if [[ ! -e "extension/${file}" ]]; then
 		echo "extension/${file} is missing" >&2
@@ -18,7 +18,9 @@ if command -v zip >/dev/null; then
 else
 	(cd extension && python3 -m zipfile -c "../${out}" "${files[@]}")
 fi
-python3 - "$out" "${files[@]}" <<'PY'
+# python -m zipfile junks file args to basenames, so icons must zip as a dir;
+# verify the files the manifest references so a partially missing set fails.
+python3 - "$out" "${files[@]}" icons/icon-16.png icons/icon-32.png icons/icon-48.png icons/icon-128.png <<'PY'
 import sys, zipfile
 out, required = sys.argv[1], sys.argv[2:]
 with zipfile.ZipFile(out) as bundle:
