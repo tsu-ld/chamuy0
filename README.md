@@ -10,9 +10,9 @@ A small Firefox and Chrome extension that scores every post in your LinkedIn fee
 
 ## What you get
 
-- A chip on every post: `✓ 1.6 clean`, `≈ 3.4 borderline`, or `☣ 8.4 slop`.
-- A breakdown with the eight signals behind the score: engagement bait, rage bait, humblebrag, AI generic, corporate buzzwords, broetry, fabricated story, manufactured hook.
-- A Train row in the popover. Label a post clean, borderline or slop, and the next classifications use your latest labels as reference.
+- A chip on every post: `Clean 1.6`, `Mixed 3.4`, or `Slop 8.4`.
+- A breakdown that always names the main tell, then the ten signals behind it: engagement bait, sponsored or collab, rage bait, hot take, humblebrag, AI generic, corporate buzzwords, broetry, fabricated story, manufactured hook.
+- A Train row in the popover. Label a post clean, borderline or slop, and the next classifications use your latest labels (with their comment or media context) as reference.
 
 ## Install on Firefox (about two minutes)
 
@@ -39,7 +39,7 @@ A small Firefox and Chrome extension that scores every post in your LinkedIn fee
 
 The scoring is done by [Jev](https://typesafe.ai), a model that only makes decisions, so it cannot write text or hallucinate. Jev is in early access. Get a key from the TypeSafe console, then paste it in the extension settings.
 
-The key and your training labels stay in your browser profile. The only thing that leaves your browser is the post text sent to `api.typesafe.ai` for scoring. No analytics, no server, no account.
+The key and your training labels stay in your browser profile. The only thing that leaves your browser is the post text sent to `api.typesafe.ai` for scoring, together with its kind (feed post or comment) and media metadata (image, video or document, plus a label when the page exposes one). No analytics, no server, no account.
 
 Cost is about $0.042 per million input tokens. A full day of scrolling costs a fraction of a cent.
 
@@ -47,8 +47,8 @@ Cost is about $0.042 per million input tokens. A full day of scrolling costs a f
 
 ![Chip states](docs/chips.png)
 
-- `...` means the post is being scored. Posts shorter than 40 characters are skipped.
-- Click the chip for the popover: the score out of 10, the verdict, and the eight signals sorted by confidence.
+- `...` means the post is being scored. A post needs at least 40 characters of text, or 10 characters plus an image, video or document; comments are judged as comments, and a short caption over media is not bait by itself.
+- Click the chip for the popover: the verdict, the score out of 10, the main tell, and the signals that fired.
 - **Train** is how it learns. Label a couple of posts, then open the settings page to see your examples. The classifier uses your latest two per label on every later request.
 
 Score bands: below 2.5 is clean, 2.5 to 5 is borderline, 5 and up is slop.
@@ -57,7 +57,7 @@ Score bands: below 2.5 is clean, 2.5 to 5 is borderline, 5 and up is slop.
 
 - **The chip never appears.** Make sure you are on linkedin.com and reload the tab after installing or updating the extension. The content script logs how many posts it found: open the browser console on linkedin.com and look for `[lnslop]`.
 - **The chip shows `!`.** The classifier was not reachable. Click the chip to retry. If it persists, check the key in the settings page.
-- **A post has no chip.** Posts without text (images only) or shorter than 40 characters are skipped on purpose.
+- **A post has no chip.** Posts without text (images only) or shorter than the thresholds above are skipped on purpose. You can also turn media posts off entirely with **Skip image and video posts** in the settings.
 - **Permanent install on Firefox.** Regular Firefox only keeps signed add-ons. Two options: use Firefox Developer Edition or Nightly with `xpinstall.signatures.required` set to `false` in `about:config`, or sign the zip yourself on [addons.mozilla.org](https://addons.mozilla.org) (choose "On your own", it is free and does not list the add-on publicly). The zip is already structured for signing.
 - **Permanent install on Chrome.** Loaded folders stay installed. That is all.
 
@@ -74,11 +74,11 @@ bun run eval    # scores fixtures/posts.json against the live API (needs .env)
 
 - `core/` is the classifier: rubric, Jev client, calibration pool. It never touches the browser.
 - `extension/` is the browser layer: background, content script, settings popup.
-- `fixtures/posts.json` is the labeled eval set. `dev/eval.ts` prints agreement per post.
+- `fixtures/posts.json` is the labeled eval set (all synthetic; no real people or post text). `dev/eval.ts` prints agreement per post and exits non-zero when a clean fixture reads as slop or the other way around.
 - `dev/preview.html` renders every chip state and popover without LinkedIn.
 - `dev/fixture-feed.html` mimics the current LinkedIn feed DOM, including the hashed-class 2026 version, to test the selectors without logging in.
 - `scripts/check`, `scripts/build`, `scripts/package` and `scripts/release <patch|minor|major>` follow the release flow used in my other repos.
 
-The rubric lives in `core/rubric.ts`: one score question with ten levels, eight yes/no signal questions, and two thresholds. Everything else is wiring. If you want to change what counts as slop, that is the file to edit.
+The rubric lives in `core/rubric.ts`: one score question with ten levels, one main-tell choice question, ten yes/no signal questions, and the clean/slop thresholds. A post that scores borderline or worse can never come back with `none` as its main tell, and a sponsored or hot-take main tell floors the score into the slop band. `core/post.ts` defines the context (post or comment, media kind) that travels with every request. Everything else is wiring. If you want to change what counts as slop, the rubric is the file to edit.
 
 This README scored 0.5/10 on the classifier it describes, which feels about right.
