@@ -1,22 +1,21 @@
+import type { PostContext } from '../core/post'
 import type { Verdict } from '../core/rubric'
 import type { ClassifyReply } from './protocol'
 import { addExample, buildState } from '../core/examples'
 import { askJev, DEFAULT_MODEL } from '../core/jev'
+import { parsePostContext } from '../core/post'
 import { buildQuestions, isVerdict, toVerdict } from '../core/rubric'
 import { extensionApi } from './api'
 import { readApiKey, readTraining, writeTraining } from './storage'
 
-const MIN_TEXT_LENGTH = 20
-const MAX_TEXT_LENGTH = 8000
-
 interface ClassifyMessage {
   type: 'classify'
-  text: string
+  context: PostContext
 }
 
 interface LabelMessage {
   type: 'label'
-  text: string
+  context: PostContext
   label: Verdict
 }
 
@@ -46,7 +45,7 @@ async function respond(raw: unknown, sendResponse: (reply: unknown) => void): Pr
 async function route(message: ExtensionMessage): Promise<unknown> {
   switch (message.type) {
     case 'classify':
-      return classify(message.text)
+      return classify(message.context)
     case 'label':
       return label(message)
     default:
@@ -59,29 +58,28 @@ function readMessage(raw: unknown): ExtensionMessage {
   if (typeof raw !== 'object' || raw === null || !('type' in raw)) {
     throw new Error('Malformed extension message')
   }
-  const candidate = raw as { type: unknown, text?: unknown, label?: unknown }
-  if (candidate.type === 'classify') return { type: 'classify', text: readText(candidate.text) }
+  const candidate = raw as { type: unknown, context?: unknown, label?: unknown }
+  if (candidate.type === 'classify') return { type: 'classify', context: readContext(candidate.context) }
   if (candidate.type === 'label') {
     if (!isVerdict(candidate.label)) throw new Error('Unknown training label')
-    return { type: 'label', text: readText(candidate.text), label: candidate.label }
+    return { type: 'label', context: readContext(candidate.context), label: candidate.label }
   }
   if (candidate.type === 'openOptions') return { type: 'openOptions' }
   throw new Error(`Unknown message type: ${String(candidate.type)}`)
 }
 
-function readText(value: unknown): string {
-  if (typeof value !== 'string' || value.length < MIN_TEXT_LENGTH || value.length > MAX_TEXT_LENGTH) {
-    throw new Error('Invalid post text')
-  }
-  return value
+function readContext(value: unknown): PostContext {
+  const context = parsePostContext(value)
+  if (!context) throw new Error('Invalid post context')
+  return context
 }
 
-async function classify(text: string): Promise<ClassifyReply> {
+async function classify(context: PostContext): Promise<ClassifyReply> {
   const apiKey = await readApiKey()
   if (!apiKey) return { ok: false, code: 'no-key', error: 'TypeSafe API key not set' }
   try {
     const pool = await readTraining()
-    const response = await askJev(buildQuestions(), buildState(text, pool), { apiKey })
+    const response = await askJev(buildQuestions(), buildState(context, pool), { apiKey })
     return {
       ok: true,
       verdict: toVerdict(response.answers),
@@ -95,7 +93,7 @@ async function classify(text: string): Promise<ClassifyReply> {
 
 async function label(message: LabelMessage): Promise<{ ok: true, count: number }> {
   const pool = await readTraining()
-  const updated = addExample(pool, message.text, message.label)
+  const updated = addExample(pool, message.context, message.label)
   await writeTraining(updated)
   return { ok: true, count: updated.length }
 }

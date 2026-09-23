@@ -1,7 +1,7 @@
 import type { TrainingExample } from '../core/examples'
 import type { HideSettings } from '../core/hide'
 import { parseHide } from '../core/hide'
-import { readApiKey, readHide, readTraining, writeApiKey, writeHide } from './storage'
+import { readApiKey, readHide, readSkipMedia, readTraining, writeApiKey, writeHide, writeSkipMedia } from './storage'
 
 const EXCERPT_LIMIT = 140
 const SHOWN_LIMIT = 4
@@ -16,14 +16,19 @@ const hideEnabled = mustFind<HTMLInputElement>('#hide-enabled')
 const hideThreshold = mustFind<HTMLInputElement>('#hide-threshold')
 const hideValue = mustFind<HTMLOutputElement>('#hide-value')
 const hideStatus = mustFind<HTMLElement>('#hide-status')
+const skipMedia = mustFind<HTMLInputElement>('#skip-media')
 
 async function start(): Promise<void> {
   keyInput.value = await readApiKey()
   renderHide(await readHide())
+  skipMedia.checked = await readSkipMedia()
   await renderTraining()
   keyForm.addEventListener('submit', (event) => {
     event.preventDefault()
     void saveKey()
+  })
+  skipMedia.addEventListener('change', () => {
+    void writeSkipMedia(skipMedia.checked)
   })
   hideEnabled.addEventListener('change', () => {
     void saveHide()

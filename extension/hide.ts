@@ -1,6 +1,5 @@
 import type { HideSettings } from '../core/hide'
 import type { SlopReply } from './protocol'
-import { textKey } from '../core/hash'
 import { shouldHide } from '../core/hide'
 
 const CARD_CLASS = 'lnslop-host'
@@ -35,7 +34,7 @@ export class HideDeck {
   note(chip: HTMLButtonElement, reply: SlopReply, settings: HideSettings): void {
     const card = chip.closest<HTMLElement>(`.${CARD_CLASS}`)
     if (!card) return
-    const key = textKey(chip.dataset.lnslopText ?? '')
+    const key = chip.dataset.lnslopKey ?? ''
     card.dataset.lnslopScore = String(reply.verdict.score)
     card.dataset.lnslopKey = key
     if (!shouldHide(reply.verdict.score, settings)) return

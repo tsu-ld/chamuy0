@@ -31,4 +31,11 @@ function hasSlopVerdict(value: unknown): value is SlopVerdict {
   return isVerdict(candidate.verdict)
     && typeof candidate.score === 'number'
     && Array.isArray(candidate.signals)
+    && hasReason(candidate.reason)
+}
+
+function hasReason(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false
+  const candidate = value as { key?: unknown, label?: unknown }
+  return typeof candidate.key === 'string' && typeof candidate.label === 'string'
 }

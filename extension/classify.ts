@@ -1,3 +1,4 @@
+import type { PostContext } from '../core/post'
 import type { ClassifyReply, SlopReply } from './protocol'
 import { extensionApi } from './api'
 import { isSlopReply } from './protocol'
@@ -8,8 +9,8 @@ interface ReplyFailure extends Error {
   code: 'no-key' | 'request'
 }
 
-export async function requestVerdict(text: string): Promise<SlopReply> {
-  const request = extensionApi.runtime.sendMessage({ type: 'classify', text }) as Promise<ClassifyReply>
+export async function requestVerdict(context: PostContext): Promise<SlopReply> {
+  const request = extensionApi.runtime.sendMessage({ type: 'classify', context }) as Promise<ClassifyReply>
   const reply = await withTimeout(request, REPLY_TIMEOUT_MS)
   if (isSlopReply(reply)) return reply
   if (!reply.ok) {
