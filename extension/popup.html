@@ -10,15 +10,30 @@
     <main class="lnslop-panel">
       <h1>chamuy0</h1>
       <p class="lnslop-lede">
-        One quick step and you are done. Your API key and your training labels
-        never leave this browser profile.
+        Classify posts with the free trial, a subscription, or your own
+        TypeSafe API key. Training labels stay in this browser profile.
       </p>
 
+      <section class="lnslop-section" aria-labelledby="plan-title">
+        <h2 id="plan-title">Plan</h2>
+        <div class="lnslop-plan-row">
+          <div class="lnslop-plan-text">
+            <p id="plan-status" class="lnslop-plan-status" role="status" aria-live="polite"></p>
+            <p id="plan-detail" class="lnslop-plan-detail"></p>
+          </div>
+          <button id="plan-subscribe" class="lnslop-plan-primary" type="button">Subscribe</button>
+        </div>
+        <button id="plan-subscribe-year" class="lnslop-plan-manage" type="button" hidden>or $10/year</button>
+        <p id="plan-note" class="lnslop-plan-note" hidden>Use your own key below.</p>
+        <p id="plan-error" class="lnslop-plan-error" hidden>Can't reach the plan service. Check your connection, then close and reopen this popup.</p>
+        <button id="plan-manage" class="lnslop-plan-manage" type="button" hidden>Cancel subscription</button>
+      </section>
+
       <section aria-labelledby="lnslop-key-h">
-        <h2 id="lnslop-key-h">Step 1. TypeSafe API key</h2>
+        <h2 id="lnslop-key-h">Use your own TypeSafe API key</h2>
         <p class="lnslop-lede">
           Paste your key from the TypeSafe console. Save, then open or reload
-          linkedin.com.
+          linkedin.com. With your own key, nothing goes through our server.
         </p>
         <form id="key-form" class="lnslop-field">
           <label for="api-key">TypeSafe API key</label>
@@ -40,6 +55,10 @@
             <output id="hide-value" for="hide-threshold">5.0</output>
           </div>
           <p id="hide-status" class="lnslop-status" role="status"></p>
+          <div class="lnslop-inline">
+            <input id="skip-media" type="checkbox" />
+            <label for="skip-media">Skip image and video posts</label>
+          </div>
         </form>
       </section>
 

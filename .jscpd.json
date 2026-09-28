@@ -9,6 +9,7 @@
     "**/training/**",
     "**/dev/preview.html",
     "**/store/shots.html",
+    "**/demo/**",
     "**/*.md"
   ]
 }

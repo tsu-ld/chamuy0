@@ -1,28 +1,24 @@
+import type { PostContext } from '../core/post'
 import type { Verdict } from '../core/rubric'
 import type { SlopReply } from './protocol'
-import { textKey } from '../core/hash'
 import { parseHide } from '../core/hide'
+import { parsePostContext, postKey } from '../core/post'
 import { extensionApi } from './api'
 import { applyFailure, applyPending, applyVerdict, buildPopover } from './badge'
 import { readFailureCode, requestVerdict } from './classify'
+import { extractPost } from './extract'
 import { HideDeck } from './hide'
 import { applyPalette, readHostPalette } from './palette'
-import { onHideChange, readHide } from './storage'
+import { onHideChange, onSkipMediaChange, readHide, readSkipMedia } from './storage'
 
 const TEXT_ANCHOR_SELECTOR = '[data-testid="expandable-text-box"]'
 const LEGACY_CARD_SELECTOR = '[data-urn^="urn:li:activity"], [data-id^="urn:li:activity"]'
-const LEGACY_TEXT_SELECTORS = [
-  '.update-components-text',
-  '.feed-shared-update-v2__commentary',
-  '.feed-shared-text',
-]
 const SOCIAL_BAR_SELECTOR = 'svg#comment-small, svg#repost-small, svg#thumbs-up-outline-small, [aria-label^="Reaction button state"]'
 const COMMENT_ICON = 'svg#comment-small'
 const REPOST_ICON = 'svg#repost-small'
 const CHIP_CLASS = 'lnslop-chip'
 const HOST_CLASS = 'lnslop-host'
 const CARD_MARKER = 'lnslopCard'
-const MIN_POST_LENGTH = 40
 const SCAN_DEBOUNCE_MS = 400
 const MAX_CONCURRENT = 2
 const MAX_CACHED_VERDICTS = 200
@@ -30,7 +26,7 @@ const MAX_CARD_WALK = 20
 
 interface Task {
   chip: HTMLButtonElement
-  text: string
+  context: PostContext
 }
 
 const verdicts = new Map<string, SlopReply>()
@@ -42,13 +38,19 @@ let openChip: HTMLButtonElement | null = null
 let scanTimer: number | undefined
 let lastCardCount = -1
 let hideSettings = parseHide(null)
+let skipMedia = false
 
 async function start(): Promise<void> {
   console.info('[lnslop] watching the feed')
   hideSettings = await readHide()
+  skipMedia = await readSkipMedia()
   onHideChange((next) => {
     hideSettings = next
     deck.sync(document, next)
+  })
+  onSkipMediaChange((next) => {
+    skipMedia = next
+    scheduleScan()
   })
   const observer = new MutationObserver(scheduleScan)
   observer.observe(document.body, { childList: true, subtree: true })
@@ -68,7 +70,10 @@ function scan(): void {
   }
   for (const card of cards) {
     if (card.dataset[CARD_MARKER] && card.querySelector(`.${CHIP_CLASS}`)) continue
-    attach(card)
+    const context = extractPost(card, findCommentaryAnchor(card))
+    if (!context) continue
+    if (skipMedia && context.media !== 'none') continue
+    attach(card, context)
   }
 }
 
@@ -115,31 +120,20 @@ function hasCardAncestor(card: HTMLElement, cards: Set<HTMLElement>): boolean {
   return false
 }
 
-function attach(card: HTMLElement): void {
-  const text = extractText(card, findCommentaryAnchor(card))
-  if (!text) return
+function attach(card: HTMLElement, context: PostContext): void {
   card.dataset[CARD_MARKER] = '1'
   const chip = createChip(card)
-  chip.dataset.lnslopText = text
-  const cached = verdicts.get(textKey(text))
+  const key = postKey(context)
+  chip.dataset.lnslopKey = key
+  chip.dataset.lnslopContext = JSON.stringify(context)
+  const cached = verdicts.get(key)
   if (cached) {
     applyVerdict(chip, cached)
     deck.note(chip, cached, hideSettings)
     return
   }
-  queue.push({ chip, text })
+  queue.push({ chip, context })
   pump()
-}
-
-function extractText(card: HTMLElement, anchor: HTMLElement | null): string | null {
-  const anchored = anchor ? normalize(readAnchor(anchor)) : ''
-  if (anchored.length >= MIN_POST_LENGTH) return anchored
-  for (const selector of LEGACY_TEXT_SELECTORS) {
-    const node = card.querySelector<HTMLElement>(selector)
-    const text = normalize(node?.textContent ?? '')
-    if (text.length >= MIN_POST_LENGTH) return text
-  }
-  return null
 }
 
 function findCommentaryAnchor(card: HTMLElement): HTMLElement | null {
@@ -149,16 +143,6 @@ function findCommentaryAnchor(card: HTMLElement): HTMLElement | null {
     if (anchor.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING) return anchor
   }
   return null
-}
-
-function readAnchor(anchor: HTMLElement): string {
-  const clone = anchor.cloneNode(true) as HTMLElement
-  for (const button of clone.querySelectorAll('button')) button.remove()
-  return clone.textContent ?? ''
-}
-
-function normalize(raw: string): string {
-  return raw.replaceAll(/[\u200B\u200C\u200D]/g, '').replace(/\s+/g, ' ').trim()
 }
 
 function createChip(card: HTMLElement): HTMLButtonElement {
@@ -187,24 +171,35 @@ function findActionBar(card: HTMLElement): HTMLElement | null {
   return null
 }
 
+function readContext(chip: HTMLButtonElement): PostContext | null {
+  const raw = chip.dataset.lnslopContext
+  if (!raw) return null
+  try {
+    return parsePostContext(JSON.parse(raw))
+  } catch {
+    return null
+  }
+}
+
 function handleChipClick(chip: HTMLButtonElement): void {
-  if (chip.dataset.lnslopCode === 'no-key') {
-    const text = chip.dataset.lnslopText ?? ''
-    delete chip.dataset.lnslopCode
-    applyPending(chip)
-    queue.push({ chip, text })
-    pump()
+  if (chip.dataset.lnslopCode === 'no-access') {
     void extensionApi.runtime.sendMessage({ type: 'openOptions' })
     return
   }
+  if (chip.dataset.lnslopCode === 'quota') return
   if (chip.classList.contains('lnslop-error')) {
     applyPending(chip)
-    const text = chip.dataset.lnslopText ?? ''
-    queue.push({ chip, text })
-    pump()
+    requeue(chip)
     return
   }
   togglePopover(chip)
+}
+
+function requeue(chip: HTMLButtonElement): void {
+  const context = readContext(chip)
+  if (!context) return
+  queue.push({ chip, context })
+  pump()
 }
 
 function togglePopover(chip: HTMLButtonElement): void {
@@ -213,12 +208,16 @@ function togglePopover(chip: HTMLButtonElement): void {
     return
   }
   closePopover(false)
-  const text = chip.dataset.lnslopText ?? ''
-  const reply = verdicts.get(textKey(text))
-  if (!reply) return
+  const context = readContext(chip)
+  if (!context) return
+  const reply = verdicts.get(postKey(context))
+  if (reply) mountPopover(chip, context, reply)
+}
+
+function mountPopover(chip: HTMLButtonElement, context: PostContext, reply: SlopReply): void {
   const host = chip.closest<HTMLElement>(`.${HOST_CLASS}`)
   if (!host) return
-  const popover = buildCardPopover(chip, text, reply)
+  const popover = buildCardPopover(chip, context, reply)
   host.append(popover)
   chip.setAttribute('aria-expanded', 'true')
   openPopover = popover
@@ -226,9 +225,9 @@ function togglePopover(chip: HTMLButtonElement): void {
   popover.querySelector<HTMLButtonElement>('.lnslop-close')?.focus()
 }
 
-function buildCardPopover(chip: HTMLButtonElement, text: string, reply: SlopReply): HTMLElement {
+function buildCardPopover(chip: HTMLButtonElement, context: PostContext, reply: SlopReply): HTMLElement {
   const popover = buildPopover(reply, (label) => {
-    void saveLabel(chip, text, label)
+    void saveLabel(chip, context, label)
   })
   const host = chip.closest<HTMLElement>(`.${HOST_CLASS}`)
   if (host) applyPalette(popover, readHostPalette(findCommentaryAnchor(host) ?? host))
@@ -244,13 +243,13 @@ function closePopover(refocus: boolean): void {
   openChip = null
 }
 
-async function saveLabel(chip: HTMLButtonElement, text: string, label: Verdict): Promise<void> {
+async function saveLabel(chip: HTMLButtonElement, context: PostContext, label: Verdict): Promise<void> {
   try {
-    await extensionApi.runtime.sendMessage({ type: 'label', text, label })
-    verdicts.delete(textKey(text))
+    await extensionApi.runtime.sendMessage({ type: 'label', context, label })
+    verdicts.delete(postKey(context))
     applyPending(chip)
     closePopover(false)
-    queue.push({ chip, text })
+    queue.push({ chip, context })
     pump()
   } catch {
     closePopover(false)
@@ -270,14 +269,15 @@ function pump(): void {
 
 async function run(task: Task): Promise<void> {
   try {
-    const reply = await requestVerdict(task.text)
-    rememberVerdict(textKey(task.text), reply)
+    const reply = await requestVerdict(task.context)
+    rememberVerdict(postKey(task.context), reply)
     delete task.chip.dataset.lnslopCode
     applyVerdict(task.chip, reply)
     deck.note(task.chip, reply, hideSettings)
   } catch (error) {
-    task.chip.dataset.lnslopCode = readFailureCode(error)
-    applyFailure(task.chip)
+    const code = readFailureCode(error)
+    task.chip.dataset.lnslopCode = code
+    applyFailure(task.chip, code)
   } finally {
     inFlight -= 1
     pump()

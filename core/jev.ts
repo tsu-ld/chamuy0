@@ -20,6 +20,7 @@ const NETWORK_FAILURE = 0
 export interface JevOptions {
   apiKey: string
   model?: string
+  baseUrl?: string
 }
 
 export interface JevResponse {
@@ -27,7 +28,7 @@ export interface JevResponse {
   model?: string
 }
 
-class JevError extends Error {
+export class JevError extends Error {
   readonly status: number
 
   readonly retryAfterMs: number
@@ -45,14 +46,14 @@ export async function askJev(
   state: string,
   options: JevOptions,
 ): Promise<JevResponse> {
-  const resolved = { apiKey: options.apiKey, model: options.model ?? DEFAULT_MODEL }
+  const resolved = { apiKey: options.apiKey, model: options.model ?? DEFAULT_MODEL, baseUrl: options.baseUrl ?? BASE_URL }
 
   async function attempt(retriesLeft: number): Promise<JevResponse> {
     try {
       return await postOnce(questions, state, resolved)
     } catch (error) {
       const failure = toJevError(error)
-      if (retriesLeft === 0 || !isRetryable(failure.status)) throw failure
+      if (retriesLeft === 0 || !isRetryable(failure)) throw failure
       await pause(failure.retryAfterMs, MAX_RETRIES - retriesLeft)
       return attempt(retriesLeft - 1)
     }
@@ -64,10 +65,11 @@ export async function askJev(
 interface ResolvedOptions {
   apiKey: string
   model: string
+  baseUrl: string
 }
 
 async function postOnce(questions: JevQuestions, state: string, options: ResolvedOptions): Promise<JevResponse> {
-  const response = await fetch(BASE_URL, {
+  const response = await fetch(options.baseUrl, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${options.apiKey}`,
@@ -97,12 +99,24 @@ function readResponse(payload: unknown): JevResponse {
 
 async function responseFailure(response: Response): Promise<JevError> {
   const detail = await response.text()
+  if (response.status === HTTP_RATE_LIMIT && errorField(detail) === 'quota') {
+    return new JevError('quota', response.status, readRetryAfterMs(response))
+  }
   const excerpt = detail.slice(0, ERROR_EXCERPT_LENGTH)
   return new JevError(
     `Jev responded ${response.status}: ${excerpt}`,
     response.status,
     readRetryAfterMs(response),
   )
+}
+
+function errorField(detail: string): string {
+  try {
+    const payload = JSON.parse(detail) as { error?: unknown }
+    return typeof payload.error === 'string' ? payload.error : ''
+  } catch {
+    return ''
+  }
 }
 
 function readRetryAfterMs(response: Response): number {
@@ -126,11 +140,16 @@ async function pause(retryAfterMs: number, attemptNumber: number): Promise<void>
   })
 }
 
-function isRetryable(status: number): boolean {
-  if (status === NETWORK_FAILURE || status === HTTP_REQUEST_TIMEOUT || status === HTTP_RATE_LIMIT) {
+function isRetryable(failure: JevError): boolean {
+  if (isQuota(failure)) return false
+  if (failure.status === NETWORK_FAILURE || failure.status === HTTP_REQUEST_TIMEOUT || failure.status === HTTP_RATE_LIMIT) {
     return true
   }
-  return status >= HTTP_SERVER_ERROR_FLOOR
+  return failure.status >= HTTP_SERVER_ERROR_FLOOR
+}
+
+function isQuota(failure: JevError): boolean {
+  return failure.status === HTTP_RATE_LIMIT && failure.message === 'quota'
 }
 
 function toJevError(error: unknown): JevError {

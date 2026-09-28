@@ -1,11 +1,17 @@
 import type { SlopVerdict, Verdict } from '../core/rubric'
-import type { SlopReply } from './protocol'
+import type { FailureCode, SlopReply } from './protocol'
 import { VERDICTS } from '../core/rubric'
 
 const STATE_CLASS: Record<Verdict, string> = {
   clean: 'lnslop-good',
   borderline: 'lnslop-meh',
   slop: 'lnslop-bad',
+}
+
+const STATE_WORD: Record<Verdict, string> = {
+  clean: 'Clean',
+  borderline: 'Mixed',
+  slop: 'Slop',
 }
 
 const SCORE_DECIMALS = 1
@@ -18,12 +24,24 @@ export function applyPending(chip: HTMLButtonElement): void {
   chip.setAttribute('aria-busy', 'true')
 }
 
-export function applyFailure(chip: HTMLButtonElement): void {
+const FAILURE_WORD: Record<FailureCode, string> = {
+  'no-access': 'Plan',
+  quota: 'Limit',
+  request: 'Retry',
+}
+
+const FAILURE_LABEL: Record<FailureCode, string> = {
+  'no-access': 'Free trial ended. Press to open settings.',
+  quota: 'Daily limit reached. Try again tomorrow.',
+  request: 'Could not classify. Press to retry.',
+}
+
+export function applyFailure(chip: HTMLButtonElement, code: FailureCode = 'request'): void {
   chip.className = 'lnslop-chip lnslop-error'
-  chip.replaceChildren(makeDot(), chipPart('lnslop-word', 'Slop'), chipPart('lnslop-num', '?'))
+  chip.replaceChildren(makeDot(), chipPart('lnslop-word', FAILURE_WORD[code]), chipPart('lnslop-num', '?'))
   chip.setAttribute('aria-expanded', 'false')
   chip.removeAttribute('aria-busy')
-  chip.setAttribute('aria-label', 'Could not classify. Press to retry.')
+  chip.setAttribute('aria-label', FAILURE_LABEL[code])
 }
 
 export function applyVerdict(chip: HTMLButtonElement, reply: SlopReply): void {
@@ -31,11 +49,11 @@ export function applyVerdict(chip: HTMLButtonElement, reply: SlopReply): void {
   chip.className = `lnslop-chip ${STATE_CLASS[verdict]}`
   chip.replaceChildren(
     makeDot(),
-    chipPart('lnslop-word', 'Slop'),
+    chipPart('lnslop-word', STATE_WORD[verdict]),
     chipPart('lnslop-num', score.toFixed(SCORE_DECIMALS)),
   )
   chip.removeAttribute('aria-busy')
-  chip.setAttribute('aria-label', `Slop ${score.toFixed(SCORE_DECIMALS)} of 10, ${verdict}. View detail.`)
+  chip.setAttribute('aria-label', `Slop score ${score.toFixed(SCORE_DECIMALS)} of 10, ${verdict}. View detail.`)
 }
 
 function makeDot(): HTMLSpanElement {
@@ -71,7 +89,7 @@ function buildHeader(slop: SlopVerdict): HTMLElement {
   header.className = 'lnslop-head'
   const verdict = document.createElement('strong')
   verdict.className = `lnslop-verdict ${STATE_CLASS[slop.verdict]}`
-  verdict.append(makeDot(), document.createTextNode(`Slop ${slop.score.toFixed(SCORE_DECIMALS)}/10`))
+  verdict.append(makeDot(), document.createTextNode(`${STATE_WORD[slop.verdict]} ${slop.score.toFixed(SCORE_DECIMALS)}/10`))
   const close = document.createElement('button')
   close.type = 'button'
   close.className = 'lnslop-close'
@@ -85,7 +103,11 @@ function buildReason(slop: SlopVerdict): HTMLElement {
   const reason = document.createElement('p')
   reason.className = 'lnslop-reason'
   const fired = slop.signals.filter((signal) => signal.on).map((signal) => signal.label)
-  reason.textContent = fired.length > 0 ? `Reads like: ${fired.join(', ')}.` : 'No bait signals fired.'
+  const lead = fired.length > 0 ? `Reads like: ${fired.join(', ')}.` : 'No bait signals fired.'
+  const tail = slop.reason.key === 'none'
+    ? (fired.length > 0 ? 'Still low overall.' : 'Reads like a human post.')
+    : `Main tell: ${slop.reason.label}.`
+  reason.textContent = `${lead} ${tail}`
   return reason
 }
 

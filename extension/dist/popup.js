@@ -1,18 +1,18 @@
 // core/rubric.ts
 var SCORE_QUESTION_KEY = "slop_score";
 var VERDICTS = ["clean", "borderline", "slop"];
-var SCORE_INSTRUCTIONS = "Score how much this post is slop: engagement bait, rage bait, broetry, manufactured hooks, hype, empty jargon, generic AI or content-farm prose, or a fabricated story with a forced lesson. Judge content and style, whatever the language. Concrete substance anchors the score: a named tool, real numbers, a dated first-person failure or a genuine offhand anecdote keeps a post low even when it is polished or lightly hyped; but concreteness does not rescue a post whose point is hype, a manufactured hook, broetry or a forced lesson. Reserve the fabricated-story reading for a parable: a stranger, boss or client delivering a tidy lesson that ends in a pitch, not any first-person work story. Level 0 is plain and concrete; level 9 is pure interaction bait that adds nothing.";
+var SCORE_INSTRUCTIONS = "Score how much this post is slop: engagement bait, rage bait, broetry, manufactured hooks, hype, empty jargon, generic AI or content-farm prose, a fabricated story with a forced lesson, or promotion dressed as content. Judge content and style, whatever the language. The state says whether this is a feed post or a comment and whether media is attached. A comment is conversation: a short reply, joke or reaction is normal and not slop. But a comment that asserts a provocative claim, dunks on an easy target or reports outrage with nothing behind it is a hot take, not conversation, and a hot take belongs at level 5 or higher. When media is attached the text is a caption: a short caption that leans on the image or video is not bait by itself, and media never rescues a sponsored, promotional or engagement-farming post. Paid, gifted or affiliate promotion presented through a lesson, story or testimonial makes the post promotional packaging: put it at level 5 or higher even when the details are technical, unless the sponsorship is a minor aside in an otherwise useful first-person account. A bare hot take also puts the post at level 5 or higher. Concrete substance anchors the score: a named tool, real numbers or a genuine offhand anecdote keeps a plainly reported post low even when it is polished or lightly hyped. But first-person detail does not lower a post whose point is a hardship or victim story engineered as a hook, a hot take, broetry, a forced lesson or a paid placement. Reserve the fabricated-story reading for a parable: a stranger, boss or client delivering a tidy lesson that ends in a pitch. A first-person work story, or a comic anecdote told for its own sake, is not a parable. A post that adds nothing, like a greeting or a one-line reaction, is low-value rather than pure bait. Level 0 is plain and concrete; level 9 is pure interaction bait, a fully fabricated story, or content whose only purpose is promotion.";
 var SCORE_CRITERIA = [
   "Plain, concrete and specific. Real information or a genuine, offhand anecdote, no hype.",
   "Real substance with a little polish or hype; still worth reading.",
-  "Real information wrapped in a template or emoji bullets, but the substance survives: names, numbers or dated events are present.",
-  "Content-farm texture: generic advice with a thin concrete core, or a mild brag.",
-  "Vague or promotional, with some real substance left.",
-  "Half substance, half filler: the point is thin and the packaging does the work.",
+  "Real information wrapped in a template or emoji bullets, but the substance survives: names, numbers or dated events are present. A friendly reply or joke that stays conversational also sits here; a take that asserts rather than informs does not.",
+  "Content-farm texture: generic advice with a thin concrete core, a mild brag, or a flat low-value take.",
+  "Vague or promotional, with some real substance left. A sparse but provocative claim lands here too.",
+  "Half substance, half filler: the point is thin and the packaging does the work, or a bold claim with nothing behind it.",
   "Filler dominates: stock phrases, hype or formatting carry a nearly empty post.",
   "A story engineered as bait: convenient anecdote, quoted dialogue, tidy lesson.",
-  "Classic bait: broetry formatting, jargon, manufactured hook, forced moral.",
-  "Pure engagement bait: asks for interaction, adds nothing, or is fully fabricated."
+  "Classic bait: broetry formatting, jargon, manufactured hook, forced moral; or a sponsored lesson where the promotion drives the post.",
+  "Pure engagement bait: asks for interaction, adds nothing, is fully fabricated, or sells through a story with no value outside the pitch."
 ];
 var SIGNAL_DEFINITIONS = [
   {
@@ -22,6 +22,15 @@ var SIGNAL_DEFINITIONS = [
     criteria: {
       true: "Asks for interaction or gates value behind engagement.",
       false: "Does not ask for interaction or gate value behind engagement."
+    }
+  },
+  {
+    key: "sponsored",
+    label: "Sponsored or collab",
+    instructions: 'Carries a paid partnership, gift or affiliate promotion presented as content: "#ad", "sponsored", "thanks to X for collaborating with me on this post", "my partner", "they sent me this", a referral push, or a third-party brand woven into a lesson or testimonial. Announcing your own product, event or service plainly is not sponsorship.',
+    criteria: {
+      true: "Presents a paid partnership, gift, affiliate or third-party promotion as content.",
+      false: "No paid partnership, gift or affiliate promotion."
     }
   },
   {
@@ -63,10 +72,10 @@ var SIGNAL_DEFINITIONS = [
   {
     key: "fake_story",
     label: "Fabricated story",
-    instructions: "A convenient anecdote polished for virality: word-for-word dialogue with a stranger, boss or janitor, mirrored-date turnarounds, a reversal, and a tidy lesson that usually ends in a pitch.",
+    instructions: "A convenient anecdote polished for virality: word-for-word dialogue with a stranger, boss or janitor, mirrored-date turnarounds, a reversal, and a tidy lesson that usually ends in a pitch. Not a self-deprecating or comic anecdote that ends on a punchline.",
     criteria: {
-      true: "Convenient anecdote with quoted dialogue and a tidy, viral-ready lesson.",
-      false: "No convenient anecdote with quoted dialogue and a tidy lesson."
+      true: "Convenient anecdote with quoted dialogue and a tidy lesson or pitch.",
+      false: "No convenient anecdote with a tidy lesson or pitch; a comic anecdote is not one."
     }
   },
   {
@@ -86,8 +95,24 @@ var SIGNAL_DEFINITIONS = [
       true: "Frames outrage or moral emotion to provoke reaction rather than inform.",
       false: "Informs or opines without outrage framing or accusatory blame."
     }
+  },
+  {
+    key: "hot_take",
+    label: "Hot take",
+    instructions: 'States a bold or provocative claim as if it were a finding, with no source, evidence or firsthand experience: a dunk, a sweeping "the industry is rotten" one-liner, or a controversy framed for argument. A claim backed by a source, numbers or firsthand work is not a hot take.',
+    criteria: {
+      true: "Bold claim with no source, evidence or firsthand experience behind it.",
+      false: "Backs its claims, or makes no provocative claim."
+    }
   }
 ];
+var REASON_QUESTION_KEY = "main_reason";
+var REASON_INSTRUCTIONS = "Name the single trait that most drives the score. Use none only when the post is plain or an ordinary conversational reply, and low_value when it adds nothing but is not bait. When the score is 5 or higher, choose the flaw that drives it, not none.";
+var REASON_LABELS = {
+  none: "Reads human",
+  low_value: "Low-value filler",
+  ...Object.fromEntries(SIGNAL_DEFINITIONS.map((definition) => [definition.key, definition.label]))
+};
 var CLEAN_MAX_SCORE = 2.5;
 var SLOP_MIN_SCORE = 5;
 var SIGNAL_ON_THRESHOLD = 0.5;
@@ -96,18 +121,10 @@ var SCORE_RAW_MIN = 0;
 var SCORE_RAW_MAX = SCORE_CRITERIA.length - 1;
 var SCORE_DISPLAY_MAX = 10;
 var SCORE_DISPLAY_FACTOR = SCORE_DISPLAY_MAX / SCORE_RAW_MAX;
-var VERDICT_QUESTION_KEY = "verdict_choice";
-var AMBIGUITY_MARGIN = 0.6;
-var VERDICT_INSTRUCTIONS = "Decide the final verdict for this post: clean (a reader gets real value), borderline (mixed: real substance with promotional or hype framing), or slop (low-value bait a careful reader should skip).";
-var VERDICT_OPTIONS = {
-  clean: "Concrete information or a genuine anecdote, no sales or virality agenda.",
-  borderline: "Real substance mixed with promotion, hype or bait framing.",
-  slop: "Engagement farming, broetry, manufactured hype or generic filler."
-};
 function buildQuestions() {
   const questions = {
     [SCORE_QUESTION_KEY]: { type: "score", instructions: SCORE_INSTRUCTIONS, criteria: SCORE_CRITERIA },
-    [VERDICT_QUESTION_KEY]: { type: "choice", instructions: VERDICT_INSTRUCTIONS, criteria: VERDICT_OPTIONS }
+    [REASON_QUESTION_KEY]: { type: "choice", instructions: REASON_INSTRUCTIONS, criteria: buildReasonOptions() }
   };
   for (const definition of SIGNAL_DEFINITIONS) {
     questions[definition.key] = {
@@ -117,6 +134,15 @@ function buildQuestions() {
     };
   }
   return questions;
+}
+function buildReasonOptions() {
+  const options = {
+    none: "Plain, concrete, or an ordinary conversational reply: no bait.",
+    low_value: "Adds nothing specific, but is not farming engagement."
+  };
+  for (const definition of SIGNAL_DEFINITIONS)
+    options[definition.key] = definition.criteria.true;
+  return options;
 }
 function isVerdict(value) {
   return typeof value === "string" && VERDICTS.includes(value);
@@ -133,22 +159,39 @@ function toVerdict(answers) {
       on: probability > SIGNAL_ON_THRESHOLD
     };
   });
-  return { score, verdict: resolveVerdict(score, readChoice(answers)), signals };
+  const stated = readReason(answers);
+  const floored = applyFloors(score, stated);
+  return { score: floored, verdict: verdictFor(floored), reason: resolveReason(stated, floored, signals), signals };
 }
-function resolveVerdict(score, choice) {
-  if (isNearBoundary(score))
-    return choice;
-  return verdictFor(score);
+function applyFloors(score, stated) {
+  if (stated !== "sponsored" && stated !== "hot_take")
+    return score;
+  return Math.max(score, SLOP_MIN_SCORE);
 }
-function isNearBoundary(score) {
-  const nearClean = Math.abs(score - CLEAN_MAX_SCORE) <= AMBIGUITY_MARGIN;
-  const nearSlop = Math.abs(score - SLOP_MIN_SCORE) <= AMBIGUITY_MARGIN;
-  return nearClean || nearSlop;
+function verdictFor(score) {
+  if (score >= SLOP_MIN_SCORE)
+    return "slop";
+  if (score < CLEAN_MAX_SCORE)
+    return "clean";
+  return "borderline";
 }
-function readChoice(answers) {
-  const answer = answers[VERDICT_QUESTION_KEY];
-  if (!answer || !isVerdict(answer.choice)) {
-    throw new Error(`Jev answer "${VERDICT_QUESTION_KEY}" must contain a valid verdict`);
+function resolveReason(key, score, signals) {
+  if (score < CLEAN_MAX_SCORE)
+    return reasonFor("none");
+  if (key !== "none")
+    return reasonFor(key);
+  const top = signals.reduce((best, signal) => signal.probability > best.probability ? signal : best);
+  if (top.on)
+    return { key: top.key, label: top.label };
+  return reasonFor("low_value");
+}
+function reasonFor(key) {
+  return { key, label: REASON_LABELS[key] };
+}
+function readReason(answers) {
+  const answer = answers[REASON_QUESTION_KEY];
+  if (!answer || typeof answer.choice !== "string" || !(answer.choice in REASON_LABELS)) {
+    throw new Error(`Jev answer "${REASON_QUESTION_KEY}" must contain a valid reason`);
   }
   return answer.choice;
 }
@@ -174,13 +217,6 @@ function readProbability(answers, key) {
 }
 function roundScore(score) {
   return Math.round(score * SCORE_PRECISION) / SCORE_PRECISION;
-}
-function verdictFor(score) {
-  if (score >= SLOP_MIN_SCORE)
-    return "slop";
-  if (score < CLEAN_MAX_SCORE)
-    return "clean";
-  return "borderline";
 }
 
 // core/hide.ts
@@ -216,10 +252,191 @@ function onLocalChange(field, listener) {
   });
 }
 
+// core/jev.ts
+var DEFAULT_MODEL = "jev-1.13.0";
+var BASE_URL = "https://api.typesafe.ai/v1/systemone";
+var MAX_RETRIES = 2;
+var BACKOFF_MS = 500;
+var JITTER_RATIO = 0.25;
+var TIMEOUT_MS = 1e4;
+var MS_PER_SECOND = 1000;
+var MAX_RETRY_AFTER_MS = 2000;
+var ERROR_EXCERPT_LENGTH = 200;
+var HTTP_REQUEST_TIMEOUT = 408;
+var HTTP_UNPROCESSABLE = 422;
+var HTTP_RATE_LIMIT = 429;
+var HTTP_SERVER_ERROR_FLOOR = 500;
+var NETWORK_FAILURE = 0;
+
+class JevError extends Error {
+  status;
+  retryAfterMs;
+  constructor(message, status, retryAfterMs = 0) {
+    super(message);
+    this.name = "JevError";
+    this.status = status;
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+async function askJev(questions, state, options) {
+  const resolved = { apiKey: options.apiKey, model: options.model ?? DEFAULT_MODEL, baseUrl: options.baseUrl ?? BASE_URL };
+  async function attempt(retriesLeft) {
+    try {
+      return await postOnce(questions, state, resolved);
+    } catch (error) {
+      const failure = toJevError(error);
+      if (retriesLeft === 0 || !isRetryable(failure))
+        throw failure;
+      await pause(failure.retryAfterMs, MAX_RETRIES - retriesLeft);
+      return attempt(retriesLeft - 1);
+    }
+  }
+  return attempt(MAX_RETRIES);
+}
+async function postOnce(questions, state, options) {
+  const response = await fetch(options.baseUrl, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${options.apiKey}`,
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({ model: options.model, questions, state }),
+    signal: AbortSignal.timeout(TIMEOUT_MS)
+  });
+  if (!response.ok)
+    throw await responseFailure(response);
+  const payload = await response.json();
+  return readResponse(payload);
+}
+function readResponse(payload) {
+  if (typeof payload !== "object" || payload === null) {
+    throw new JevError("Jev returned a non-object payload", HTTP_UNPROCESSABLE);
+  }
+  const candidate = payload;
+  if (typeof candidate.answers !== "object" || candidate.answers === null) {
+    throw new JevError("Jev payload is missing answers", HTTP_UNPROCESSABLE);
+  }
+  return {
+    answers: candidate.answers,
+    model: typeof candidate.model === "string" ? candidate.model : undefined
+  };
+}
+async function responseFailure(response) {
+  const detail = await response.text();
+  if (response.status === HTTP_RATE_LIMIT && errorField(detail) === "quota") {
+    return new JevError("quota", response.status, readRetryAfterMs(response));
+  }
+  const excerpt = detail.slice(0, ERROR_EXCERPT_LENGTH);
+  return new JevError(`Jev responded ${response.status}: ${excerpt}`, response.status, readRetryAfterMs(response));
+}
+function errorField(detail) {
+  try {
+    const payload = JSON.parse(detail);
+    return typeof payload.error === "string" ? payload.error : "";
+  } catch {
+    return "";
+  }
+}
+function readRetryAfterMs(response) {
+  const milliseconds = response.headers.get("retry-after-ms");
+  if (milliseconds) {
+    const parsed = Number(milliseconds);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  }
+  const seconds = response.headers.get("retry-after");
+  if (!seconds)
+    return 0;
+  const parsed = Number(seconds);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed * MS_PER_SECOND : 0;
+}
+async function pause(retryAfterMs, attemptNumber) {
+  const backoff = BACKOFF_MS * 2 ** attemptNumber;
+  const jitter = BACKOFF_MS * JITTER_RATIO * Math.random();
+  const waitMs = Math.max(Math.min(retryAfterMs, MAX_RETRY_AFTER_MS), backoff + jitter);
+  await new Promise((resolve) => {
+    setTimeout(resolve, waitMs);
+  });
+}
+function isRetryable(failure) {
+  if (isQuota(failure))
+    return false;
+  if (failure.status === NETWORK_FAILURE || failure.status === HTTP_REQUEST_TIMEOUT || failure.status === HTTP_RATE_LIMIT) {
+    return true;
+  }
+  return failure.status >= HTTP_SERVER_ERROR_FLOOR;
+}
+function isQuota(failure) {
+  return failure.status === HTTP_RATE_LIMIT && failure.message === "quota";
+}
+function toJevError(error) {
+  if (error instanceof JevError)
+    return error;
+  const message = error instanceof Error ? error.message : "Jev request failed";
+  return new JevError(message, NETWORK_FAILURE);
+}
+
+// core/hash.ts
+var HASH_SEED = 5381;
+var HASH_SHIFT = 5;
+var HASH_RADIX = 36;
+function hashText(text) {
+  let hash = HASH_SEED;
+  for (let index = 0;index < text.length; index += 1) {
+    hash = (hash << HASH_SHIFT) + hash ^ text.charCodeAt(index);
+  }
+  return (hash >>> 0).toString(HASH_RADIX);
+}
+function textKey(text) {
+  return `${hashText(text)}:${text.length}`;
+}
+
+// core/post.ts
+var POST_KINDS = ["post", "comment"];
+var MEDIA_KINDS = ["none", "image", "video", "document"];
+var MAX_MEDIA_LABEL_LENGTH = 200;
+var MIN_TEXT_LENGTH = 10;
+var MAX_TEXT_LENGTH = 8000;
+function isPostKind(value) {
+  return POST_KINDS.includes(value);
+}
+function isMediaKind(value) {
+  return MEDIA_KINDS.includes(value);
+}
+function parsePostContext(value) {
+  if (typeof value !== "object" || value === null)
+    return null;
+  const candidate = value;
+  if (!isPostKind(candidate.kind))
+    return null;
+  if (!isMediaKind(candidate.media))
+    return null;
+  if (typeof candidate.mediaLabel !== "string")
+    return null;
+  if (typeof candidate.text !== "string")
+    return null;
+  const text = candidate.text.slice(0, MAX_TEXT_LENGTH);
+  if (text.length < MIN_TEXT_LENGTH)
+    return null;
+  return {
+    kind: candidate.kind,
+    media: candidate.media,
+    mediaLabel: candidate.mediaLabel.slice(0, MAX_MEDIA_LABEL_LENGTH),
+    text
+  };
+}
+function postKey(context) {
+  return `${context.kind}|${context.media}|${context.mediaLabel}|${context.text}`;
+}
+
 // extension/storage.ts
 var API_KEY_FIELD = "apiKey";
 var TRAINING_FIELD = "trainingExamples";
 var HIDE_FIELD = "hide";
+var SKIP_MEDIA_FIELD = "skipMedia";
+var ACCESS_FIELD = "access";
+function isPlan(value) {
+  return value === "trial" || value === "sub" || value === "none";
+}
 async function readApiKey() {
   const stored = await extensionApi.storage.local.get(API_KEY_FIELD);
   const value = stored[API_KEY_FIELD];
@@ -228,18 +445,41 @@ async function readApiKey() {
 async function writeApiKey(apiKey) {
   await extensionApi.storage.local.set({ [API_KEY_FIELD]: apiKey });
 }
+async function readAccess() {
+  const stored = await extensionApi.storage.sync.get(ACCESS_FIELD);
+  const value = stored[ACCESS_FIELD];
+  if (typeof value !== "object" || value === null)
+    return null;
+  const candidate = value;
+  if (typeof candidate.token !== "string" || !isPlan(candidate.plan) || typeof candidate.until !== "number") {
+    return null;
+  }
+  return { token: candidate.token, plan: candidate.plan, until: candidate.until, renews: candidate.renews !== false };
+}
+async function writeAccess(access) {
+  await extensionApi.storage.sync.set({ [ACCESS_FIELD]: access });
+}
 async function readTraining() {
   const stored = await extensionApi.storage.local.get(TRAINING_FIELD);
   const value = stored[TRAINING_FIELD];
   if (!Array.isArray(value))
     return [];
-  return value.filter(isTrainingExample);
+  return value.filter(isTrainingExample).map(withCurrentId);
+}
+function withCurrentId(entry) {
+  const id = textKey(postKey({
+    kind: entry.kind ?? "post",
+    media: entry.media ?? "none",
+    mediaLabel: "",
+    text: entry.text
+  }));
+  return id === entry.id ? entry : { ...entry, id };
 }
 function isTrainingExample(entry) {
   if (typeof entry !== "object" || entry === null)
     return false;
   const candidate = entry;
-  return typeof candidate.id === "string" && typeof candidate.text === "string" && isVerdict(candidate.label);
+  return typeof candidate.id === "string" && typeof candidate.text === "string" && isVerdict(candidate.label) && (candidate.kind === undefined || isPostKind(candidate.kind)) && (candidate.media === undefined || isMediaKind(candidate.media));
 }
 async function writeTraining(pool) {
   await extensionApi.storage.local.set({ [TRAINING_FIELD]: pool });
@@ -254,11 +494,181 @@ async function writeHide(settings) {
 function onHideChange(listener) {
   onLocalChange(HIDE_FIELD, (value) => listener(parseHide(value)));
 }
+async function readSkipMedia() {
+  const stored = await extensionApi.storage.local.get(SKIP_MEDIA_FIELD);
+  return stored[SKIP_MEDIA_FIELD] === true;
+}
+async function writeSkipMedia(skipMedia) {
+  await extensionApi.storage.local.set({ [SKIP_MEDIA_FIELD]: skipMedia });
+}
+function onSkipMediaChange(listener) {
+  onLocalChange(SKIP_MEDIA_FIELD, (value) => listener(value === true));
+}
+
+// extension/entitlement.ts
+var WORKER_URL = "https://chamuy0-api.t-su.workers.dev";
+var SESSION_URL = `${WORKER_URL}/session`;
+var CLASSIFY_URL = `${WORKER_URL}/classify`;
+var SUBSCRIBE_URL = `${WORKER_URL}/subscribe`;
+var CANCEL_URL = `${WORKER_URL}/cancel`;
+var PLANS_URL = `${WORKER_URL}/plans`;
+var SESSION_TIMEOUT_MS = 1e4;
+var HTTP_UNAUTHORIZED = 401;
+var HTTP_PAYMENT_REQUIRED = 402;
+var HTTP_BAD_GATEWAY = 502;
+var HEX_RADIX = 16;
+function isPlanActive(access, now) {
+  if (!access || access.plan === "none")
+    return false;
+  return access.until > now;
+}
+async function startPlan() {
+  return storeReply(await postSession(await deviceFingerprint()));
+}
+async function currentPlan() {
+  const access = await readAccess();
+  if (!access)
+    return startPlan();
+  try {
+    return storeReply(await getSession(access.token));
+  } catch (error) {
+    if (error instanceof JevError && error.status === HTTP_UNAUTHORIZED)
+      return startPlan();
+    return access;
+  }
+}
+async function askPlan(questions, state) {
+  const access = await readAccess();
+  if (!isPlanActive(access, Date.now()) || !access)
+    throw new JevError("No plan", HTTP_PAYMENT_REQUIRED);
+  return askJev(questions, state, { apiKey: access.token, baseUrl: CLASSIFY_URL });
+}
+async function readPlans() {
+  const response = await fetch(PLANS_URL, { signal: AbortSignal.timeout(SESSION_TIMEOUT_MS) });
+  if (!response.ok)
+    throw await requestError(response, "Plans request failed");
+  const payload = await response.json();
+  if (!Array.isArray(payload.plans))
+    throw new JevError("Malformed plans reply", HTTP_BAD_GATEWAY);
+  return payload.plans.filter(isPublicPlan);
+}
+async function requestSubscribe(plan) {
+  const payload = await postAuthorized(SUBSCRIBE_URL, { plan });
+  if (typeof payload.url !== "string" || !payload.url)
+    throw new JevError("Malformed subscribe reply", HTTP_BAD_GATEWAY);
+  return payload.url;
+}
+async function cancelPlan() {
+  await postAuthorized(CANCEL_URL, {});
+}
+async function postAuthorized(url, body) {
+  const access = await readAccess();
+  if (!access)
+    throw new JevError("No install token", HTTP_UNAUTHORIZED);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { authorization: `Bearer ${access.token}`, "content-type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(SESSION_TIMEOUT_MS)
+  });
+  if (!response.ok)
+    throw await requestError(response, "Request failed");
+  return response.json();
+}
+var ERROR_TEXT = {
+  "no-subscription": "No subscription to cancel.",
+  "unknown-plan": "That plan is not available.",
+  "unknown-token": "This install is not recognized. Close and reopen the popup.",
+  "no-token": "This install is not recognized. Close and reopen the popup.",
+  "no-access": "Free trial ended. Subscribe or add your own key.",
+  quota: "Daily limit reached. Try again tomorrow.",
+  "too-many-sessions": "Too many trials from this network today.",
+  "mercado-pago": "Mercado Pago did not accept the request. Try again."
+};
+async function requestError(response, fallback) {
+  const code = errorField2(await response.text());
+  const known = ERROR_TEXT[code];
+  const message = known ? known : `${fallback}: ${response.status}`;
+  return new JevError(message, response.status);
+}
+function errorField2(detail) {
+  try {
+    const payload = JSON.parse(detail);
+    return typeof payload.error === "string" ? payload.error : "";
+  } catch {
+    return "";
+  }
+}
+function isPublicPlan(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  const plan = value;
+  return typeof plan.id === "string" && typeof plan.amount === "number" && typeof plan.usd === "number" && typeof plan.currency === "string" && typeof plan.period === "string";
+}
+async function postSession(fingerprint) {
+  const response = await fetch(SESSION_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ fingerprint }),
+    signal: AbortSignal.timeout(SESSION_TIMEOUT_MS)
+  });
+  return readReply(response);
+}
+async function getSession(token) {
+  const response = await fetch(SESSION_URL, {
+    method: "GET",
+    headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(SESSION_TIMEOUT_MS)
+  });
+  return readReply(response);
+}
+async function readReply(response) {
+  if (!response.ok)
+    throw await requestError(response, "Session request failed");
+  return parseReply(await response.json());
+}
+function parseReply(payload) {
+  const candidate = payload;
+  if (!candidate || typeof candidate.token !== "string" || typeof candidate.until !== "number" || !isPlan(candidate.plan)) {
+    throw new JevError("Malformed session reply", HTTP_BAD_GATEWAY);
+  }
+  return {
+    token: candidate.token,
+    plan: candidate.plan,
+    until: candidate.until,
+    renews: candidate.renews !== false
+  };
+}
+async function storeReply(reply) {
+  const access = { token: reply.token, plan: reply.plan, until: reply.until, renews: reply.renews };
+  await writeAccess(access);
+  return access;
+}
+async function deviceFingerprint() {
+  const memory = navigator.deviceMemory;
+  const source = [
+    navigator.platform,
+    navigator.userAgent.replace(/[\d.]+/g, ""),
+    navigator.language,
+    new Intl.DateTimeFormat().resolvedOptions().timeZone,
+    String(navigator.hardwareConcurrency),
+    String(memory ?? "")
+  ].join("|");
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(source));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(HEX_RADIX).padStart(2, "0")).join("");
+}
 
 // extension/popup.ts
 var EXCERPT_LIMIT = 140;
 var SHOWN_LIMIT = 4;
 var SCORE_DECIMALS = 1;
+var MS_PER_HOUR = 1000 * 60 * 60;
+var POLL_MS = 2 * 1000;
+var POLL_ATTEMPTS = 60;
+var CONFIRM_MS = 7 * 1000;
+var CANCEL_LABEL = "Cancel subscription";
+var CONFIRM_LABEL = "Confirm cancellation";
+var cancelArmed = false;
 var keyInput = mustFind("#api-key");
 var keyForm = mustFind("#key-form");
 var keyStatus = mustFind("#key-status");
@@ -268,13 +678,35 @@ var hideEnabled = mustFind("#hide-enabled");
 var hideThreshold = mustFind("#hide-threshold");
 var hideValue = mustFind("#hide-value");
 var hideStatus = mustFind("#hide-status");
+var skipMedia = mustFind("#skip-media");
+var planStatus = mustFind("#plan-status");
+var planDetail = mustFind("#plan-detail");
+var planSubscribe = mustFind("#plan-subscribe");
+var planSubscribeYear = mustFind("#plan-subscribe-year");
+var planManage = mustFind("#plan-manage");
+var planNote = mustFind("#plan-note");
+var planError = mustFind("#plan-error");
 async function start() {
   keyInput.value = await readApiKey();
   renderHide(await readHide());
+  skipMedia.checked = await readSkipMedia();
   await renderTraining();
+  await renderPlan();
   keyForm.addEventListener("submit", (event) => {
     event.preventDefault();
     saveKey();
+  });
+  planSubscribe.addEventListener("click", () => {
+    startCheckout("monthly");
+  });
+  planSubscribeYear.addEventListener("click", () => {
+    startCheckout("yearly");
+  });
+  planManage.addEventListener("click", () => {
+    cancelSubscription();
+  });
+  skipMedia.addEventListener("change", () => {
+    writeSkipMedia(skipMedia.checked);
   });
   hideEnabled.addEventListener("change", () => {
     saveHide();
@@ -285,6 +717,114 @@ async function start() {
   hideThreshold.addEventListener("change", () => {
     saveHide();
   });
+}
+async function renderPlan(reportError = true) {
+  const reply = await readPlanReply();
+  if (!reply.ok) {
+    if (reportError)
+      showPlanError(reply.error);
+    return false;
+  }
+  applyPlan(reply.state);
+  return isPlanActive(reply.state, Date.now());
+}
+async function readPlanReply() {
+  try {
+    return await extensionApi.runtime.sendMessage({ type: "access" });
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+function applyPlan(state) {
+  const usingPlan = state.source === "plan";
+  const canSubscribe = state.source !== "key" && (state.plan !== "sub" || !state.renews);
+  const monthly = state.plans.find((plan) => plan.period === "month");
+  const yearly = state.plans.find((plan) => plan.period === "year");
+  planStatus.textContent = statusText(state);
+  planDetail.textContent = detailText(state);
+  planSubscribe.hidden = !canSubscribe || !monthly;
+  planSubscribeYear.hidden = !canSubscribe || !yearly;
+  if (monthly)
+    planSubscribe.textContent = `Subscribe ${planLabel(monthly)}`;
+  if (yearly)
+    planSubscribeYear.textContent = `or ${planLabel(yearly)}`;
+  planManage.hidden = !(usingPlan && state.plan === "sub" && state.renews);
+  planNote.hidden = state.source !== "none";
+  planError.hidden = true;
+}
+function planLabel(plan) {
+  return `$${plan.usd}/${plan.period}`;
+}
+function statusText(state) {
+  if (state.source === "key")
+    return "Using your own key";
+  if (state.plan === "sub" && !state.renews)
+    return "Cancelled";
+  if (state.plan === "sub")
+    return "Subscribed";
+  if (state.plan === "trial")
+    return "Free trial";
+  return "No plan";
+}
+function detailText(state) {
+  if (state.source === "key")
+    return "Free forever. No plan needed.";
+  if (state.plan === "sub" && !state.renews)
+    return `Access until ${formatDate(state.until)}.`;
+  if (state.plan === "sub")
+    return `Renews ${formatDate(state.until)}.`;
+  if (state.plan === "trial")
+    return `${hoursLeft(state.until)} left. Using our key, nothing to set up.`;
+  return "Your trial ended.";
+}
+function hoursLeft(until) {
+  const hours = Math.max(1, Math.ceil((until - Date.now()) / MS_PER_HOUR));
+  return hours === 1 ? "1 hour" : `${hours} hours`;
+}
+function formatDate(until) {
+  return new Date(until).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+}
+async function startCheckout(plan) {
+  const reply = await extensionApi.runtime.sendMessage({ type: "subscribe", plan });
+  if (!reply.ok) {
+    showPlanError(reply.error);
+    return;
+  }
+  await extensionApi.tabs.create({ url: reply.url });
+  pollPlan();
+}
+async function cancelSubscription() {
+  if (!cancelArmed) {
+    cancelArmed = true;
+    planManage.textContent = CONFIRM_LABEL;
+    window.setTimeout(() => {
+      cancelArmed = false;
+      planManage.textContent = CANCEL_LABEL;
+    }, CONFIRM_MS);
+    return;
+  }
+  cancelArmed = false;
+  planManage.textContent = CANCEL_LABEL;
+  const reply = await extensionApi.runtime.sendMessage({ type: "cancel" });
+  if (!reply.ok) {
+    showPlanError(reply.error);
+    return;
+  }
+  await renderPlan();
+}
+function pollPlan() {
+  let attempts = 0;
+  const timer = window.setInterval(() => {
+    attempts += 1;
+    renderPlan(false).then((active) => {
+      if (active || attempts >= POLL_ATTEMPTS)
+        window.clearInterval(timer);
+    });
+  }, POLL_MS);
+}
+function showPlanError(message) {
+  planError.textContent = message;
+  planError.hidden = false;
 }
 async function saveKey() {
   const apiKey = keyInput.value.trim();
