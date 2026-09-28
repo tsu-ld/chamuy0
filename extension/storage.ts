@@ -10,6 +10,20 @@ const API_KEY_FIELD = 'apiKey'
 const TRAINING_FIELD = 'trainingExamples'
 const HIDE_FIELD = 'hide'
 const SKIP_MEDIA_FIELD = 'skipMedia'
+const ACCESS_FIELD = 'access'
+
+export type Plan = 'trial' | 'sub' | 'none'
+
+export interface StoredAccess {
+  token: string
+  plan: Plan
+  until: number
+  renews: boolean
+}
+
+export function isPlan(value: unknown): value is Plan {
+  return value === 'trial' || value === 'sub' || value === 'none'
+}
 
 export async function readApiKey(): Promise<string> {
   const stored = await extensionApi.storage.local.get(API_KEY_FIELD)
@@ -19,6 +33,22 @@ export async function readApiKey(): Promise<string> {
 
 export async function writeApiKey(apiKey: string): Promise<void> {
   await extensionApi.storage.local.set({ [API_KEY_FIELD]: apiKey })
+}
+
+// storage.sync, not local: a reinstall or a second browser keeps a paid plan.
+export async function readAccess(): Promise<StoredAccess | null> {
+  const stored = await extensionApi.storage.sync.get(ACCESS_FIELD)
+  const value: unknown = stored[ACCESS_FIELD]
+  if (typeof value !== 'object' || value === null) return null
+  const candidate = value as Partial<StoredAccess>
+    if (typeof candidate.token !== 'string' || !isPlan(candidate.plan) || typeof candidate.until !== 'number') {
+      return null
+    }
+    return { token: candidate.token, plan: candidate.plan, until: candidate.until, renews: candidate.renews !== false }
+}
+
+export async function writeAccess(access: StoredAccess): Promise<void> {
+  await extensionApi.storage.sync.set({ [ACCESS_FIELD]: access })
 }
 
 export async function readTraining(): Promise<TrainingExample[]> {

@@ -1,12 +1,12 @@
 import type { PostContext } from '../core/post'
-import type { ClassifyReply, SlopReply } from './protocol'
+import type { ClassifyReply, FailureCode, SlopReply } from './protocol'
 import { extensionApi } from './api'
 import { isSlopReply } from './protocol'
 
 const REPLY_TIMEOUT_MS = 35000
 
 interface ReplyFailure extends Error {
-  code: 'no-key' | 'request'
+  code: FailureCode
 }
 
 export async function requestVerdict(context: PostContext): Promise<SlopReply> {
@@ -21,8 +21,9 @@ export async function requestVerdict(context: PostContext): Promise<SlopReply> {
   throw new Error('Malformed classifier reply')
 }
 
-export function readFailureCode(error: unknown): 'no-key' | 'request' {
-  return (error as ReplyFailure).code === 'no-key' ? 'no-key' : 'request'
+export function readFailureCode(error: unknown): FailureCode {
+  const code = (error as ReplyFailure).code
+  return code === 'no-access' || code === 'quota' ? code : 'request'
 }
 
 function withTimeout<Value>(promise: Promise<Value>, milliseconds: number): Promise<Value> {

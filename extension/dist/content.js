@@ -309,12 +309,22 @@ function applyPending(chip) {
   chip.setAttribute("aria-expanded", "false");
   chip.setAttribute("aria-busy", "true");
 }
-function applyFailure(chip) {
+var FAILURE_WORD = {
+  "no-access": "Plan",
+  quota: "Limit",
+  request: "Retry"
+};
+var FAILURE_LABEL = {
+  "no-access": "Free trial ended. Press to open settings.",
+  quota: "Daily limit reached. Try again tomorrow.",
+  request: "Could not classify. Press to retry."
+};
+function applyFailure(chip, code = "request") {
   chip.className = "lnslop-chip lnslop-error";
-  chip.replaceChildren(makeDot(), chipPart("lnslop-word", "Slop"), chipPart("lnslop-num", "?"));
+  chip.replaceChildren(makeDot(), chipPart("lnslop-word", FAILURE_WORD[code]), chipPart("lnslop-num", "?"));
   chip.setAttribute("aria-expanded", "false");
   chip.removeAttribute("aria-busy");
-  chip.setAttribute("aria-label", "Could not classify. Press to retry.");
+  chip.setAttribute("aria-label", FAILURE_LABEL[code]);
 }
 function applyVerdict(chip, reply) {
   const { verdict, score } = reply.verdict;
@@ -425,7 +435,8 @@ async function requestVerdict(context) {
   throw new Error("Malformed classifier reply");
 }
 function readFailureCode(error) {
-  return error.code === "no-key" ? "no-key" : "request";
+  const code = error.code;
+  return code === "no-access" || code === "quota" ? code : "request";
 }
 function withTimeout(promise, milliseconds) {
   let timer = 0;
@@ -785,6 +796,10 @@ var API_KEY_FIELD = "apiKey";
 var TRAINING_FIELD = "trainingExamples";
 var HIDE_FIELD = "hide";
 var SKIP_MEDIA_FIELD = "skipMedia";
+var ACCESS_FIELD = "access";
+function isPlan(value) {
+  return value === "trial" || value === "sub" || value === "none";
+}
 async function readApiKey() {
   const stored = await extensionApi.storage.local.get(API_KEY_FIELD);
   const value = stored[API_KEY_FIELD];
@@ -792,6 +807,20 @@ async function readApiKey() {
 }
 async function writeApiKey(apiKey) {
   await extensionApi.storage.local.set({ [API_KEY_FIELD]: apiKey });
+}
+async function readAccess() {
+  const stored = await extensionApi.storage.sync.get(ACCESS_FIELD);
+  const value = stored[ACCESS_FIELD];
+  if (typeof value !== "object" || value === null)
+    return null;
+  const candidate = value;
+  if (typeof candidate.token !== "string" || !isPlan(candidate.plan) || typeof candidate.until !== "number") {
+    return null;
+  }
+  return { token: candidate.token, plan: candidate.plan, until: candidate.until, renews: candidate.renews !== false };
+}
+async function writeAccess(access) {
+  await extensionApi.storage.sync.set({ [ACCESS_FIELD]: access });
 }
 async function readTraining() {
   const stored = await extensionApi.storage.local.get(TRAINING_FIELD);
@@ -1002,13 +1031,12 @@ function readContext(chip) {
   }
 }
 function handleChipClick(chip) {
-  if (chip.dataset.lnslopCode === "no-key") {
-    delete chip.dataset.lnslopCode;
-    applyPending(chip);
-    requeue(chip);
+  if (chip.dataset.lnslopCode === "no-access") {
     extensionApi.runtime.sendMessage({ type: "openOptions" });
     return;
   }
+  if (chip.dataset.lnslopCode === "quota")
+    return;
   if (chip.classList.contains("lnslop-error")) {
     applyPending(chip);
     requeue(chip);
@@ -1098,8 +1126,9 @@ async function run(task) {
     applyVerdict(task.chip, reply);
     deck.note(task.chip, reply, hideSettings);
   } catch (error) {
-    task.chip.dataset.lnslopCode = readFailureCode(error);
-    applyFailure(task.chip);
+    const code = readFailureCode(error);
+    task.chip.dataset.lnslopCode = code;
+    applyFailure(task.chip, code);
   } finally {
     inFlight -= 1;
     pump();

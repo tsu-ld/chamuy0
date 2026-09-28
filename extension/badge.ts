@@ -1,5 +1,5 @@
 import type { SlopVerdict, Verdict } from '../core/rubric'
-import type { SlopReply } from './protocol'
+import type { FailureCode, SlopReply } from './protocol'
 import { VERDICTS } from '../core/rubric'
 
 const STATE_CLASS: Record<Verdict, string> = {
@@ -24,12 +24,24 @@ export function applyPending(chip: HTMLButtonElement): void {
   chip.setAttribute('aria-busy', 'true')
 }
 
-export function applyFailure(chip: HTMLButtonElement): void {
+const FAILURE_WORD: Record<FailureCode, string> = {
+  'no-access': 'Plan',
+  quota: 'Limit',
+  request: 'Retry',
+}
+
+const FAILURE_LABEL: Record<FailureCode, string> = {
+  'no-access': 'Free trial ended. Press to open settings.',
+  quota: 'Daily limit reached. Try again tomorrow.',
+  request: 'Could not classify. Press to retry.',
+}
+
+export function applyFailure(chip: HTMLButtonElement, code: FailureCode = 'request'): void {
   chip.className = 'lnslop-chip lnslop-error'
-  chip.replaceChildren(makeDot(), chipPart('lnslop-word', 'Slop'), chipPart('lnslop-num', '?'))
+  chip.replaceChildren(makeDot(), chipPart('lnslop-word', FAILURE_WORD[code]), chipPart('lnslop-num', '?'))
   chip.setAttribute('aria-expanded', 'false')
   chip.removeAttribute('aria-busy')
-  chip.setAttribute('aria-label', 'Could not classify. Press to retry.')
+  chip.setAttribute('aria-label', FAILURE_LABEL[code])
 }
 
 export function applyVerdict(chip: HTMLButtonElement, reply: SlopReply): void {

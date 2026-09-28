@@ -182,13 +182,11 @@ function readContext(chip: HTMLButtonElement): PostContext | null {
 }
 
 function handleChipClick(chip: HTMLButtonElement): void {
-  if (chip.dataset.lnslopCode === 'no-key') {
-    delete chip.dataset.lnslopCode
-    applyPending(chip)
-    requeue(chip)
+  if (chip.dataset.lnslopCode === 'no-access') {
     void extensionApi.runtime.sendMessage({ type: 'openOptions' })
     return
   }
+  if (chip.dataset.lnslopCode === 'quota') return
   if (chip.classList.contains('lnslop-error')) {
     applyPending(chip)
     requeue(chip)
@@ -277,8 +275,9 @@ async function run(task: Task): Promise<void> {
     applyVerdict(task.chip, reply)
     deck.note(task.chip, reply, hideSettings)
   } catch (error) {
-    task.chip.dataset.lnslopCode = readFailureCode(error)
-    applyFailure(task.chip)
+    const code = readFailureCode(error)
+    task.chip.dataset.lnslopCode = code
+    applyFailure(task.chip, code)
   } finally {
     inFlight -= 1
     pump()

@@ -241,6 +241,140 @@ function shouldHide(score, settings) {
   return settings.enabled && score >= settings.threshold;
 }
 
+// extension/api.ts
+var scope = globalThis;
+var extensionApi = scope.browser ?? scope.chrome;
+function onLocalChange(field, listener) {
+  extensionApi.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local" || !(field in changes))
+      return;
+    listener(changes[field].newValue);
+  });
+}
+
+// core/jev.ts
+var DEFAULT_MODEL = "jev-1.13.0";
+var BASE_URL = "https://api.typesafe.ai/v1/systemone";
+var MAX_RETRIES = 2;
+var BACKOFF_MS = 500;
+var JITTER_RATIO = 0.25;
+var TIMEOUT_MS = 1e4;
+var MS_PER_SECOND = 1000;
+var MAX_RETRY_AFTER_MS = 2000;
+var ERROR_EXCERPT_LENGTH = 200;
+var HTTP_REQUEST_TIMEOUT = 408;
+var HTTP_UNPROCESSABLE = 422;
+var HTTP_RATE_LIMIT = 429;
+var HTTP_SERVER_ERROR_FLOOR = 500;
+var NETWORK_FAILURE = 0;
+
+class JevError extends Error {
+  status;
+  retryAfterMs;
+  constructor(message, status, retryAfterMs = 0) {
+    super(message);
+    this.name = "JevError";
+    this.status = status;
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+async function askJev(questions, state, options) {
+  const resolved = { apiKey: options.apiKey, model: options.model ?? DEFAULT_MODEL, baseUrl: options.baseUrl ?? BASE_URL };
+  async function attempt(retriesLeft) {
+    try {
+      return await postOnce(questions, state, resolved);
+    } catch (error) {
+      const failure = toJevError(error);
+      if (retriesLeft === 0 || !isRetryable(failure))
+        throw failure;
+      await pause(failure.retryAfterMs, MAX_RETRIES - retriesLeft);
+      return attempt(retriesLeft - 1);
+    }
+  }
+  return attempt(MAX_RETRIES);
+}
+async function postOnce(questions, state, options) {
+  const response = await fetch(options.baseUrl, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${options.apiKey}`,
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({ model: options.model, questions, state }),
+    signal: AbortSignal.timeout(TIMEOUT_MS)
+  });
+  if (!response.ok)
+    throw await responseFailure(response);
+  const payload = await response.json();
+  return readResponse(payload);
+}
+function readResponse(payload) {
+  if (typeof payload !== "object" || payload === null) {
+    throw new JevError("Jev returned a non-object payload", HTTP_UNPROCESSABLE);
+  }
+  const candidate = payload;
+  if (typeof candidate.answers !== "object" || candidate.answers === null) {
+    throw new JevError("Jev payload is missing answers", HTTP_UNPROCESSABLE);
+  }
+  return {
+    answers: candidate.answers,
+    model: typeof candidate.model === "string" ? candidate.model : undefined
+  };
+}
+async function responseFailure(response) {
+  const detail = await response.text();
+  if (response.status === HTTP_RATE_LIMIT && errorField(detail) === "quota") {
+    return new JevError("quota", response.status, readRetryAfterMs(response));
+  }
+  const excerpt = detail.slice(0, ERROR_EXCERPT_LENGTH);
+  return new JevError(`Jev responded ${response.status}: ${excerpt}`, response.status, readRetryAfterMs(response));
+}
+function errorField(detail) {
+  try {
+    const payload = JSON.parse(detail);
+    return typeof payload.error === "string" ? payload.error : "";
+  } catch {
+    return "";
+  }
+}
+function readRetryAfterMs(response) {
+  const milliseconds = response.headers.get("retry-after-ms");
+  if (milliseconds) {
+    const parsed = Number(milliseconds);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  }
+  const seconds = response.headers.get("retry-after");
+  if (!seconds)
+    return 0;
+  const parsed = Number(seconds);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed * MS_PER_SECOND : 0;
+}
+async function pause(retryAfterMs, attemptNumber) {
+  const backoff = BACKOFF_MS * 2 ** attemptNumber;
+  const jitter = BACKOFF_MS * JITTER_RATIO * Math.random();
+  const waitMs = Math.max(Math.min(retryAfterMs, MAX_RETRY_AFTER_MS), backoff + jitter);
+  await new Promise((resolve) => {
+    setTimeout(resolve, waitMs);
+  });
+}
+function isRetryable(failure) {
+  if (isQuota(failure))
+    return false;
+  if (failure.status === NETWORK_FAILURE || failure.status === HTTP_REQUEST_TIMEOUT || failure.status === HTTP_RATE_LIMIT) {
+    return true;
+  }
+  return failure.status >= HTTP_SERVER_ERROR_FLOOR;
+}
+function isQuota(failure) {
+  return failure.status === HTTP_RATE_LIMIT && failure.message === "quota";
+}
+function toJevError(error) {
+  if (error instanceof JevError)
+    return error;
+  const message = error instanceof Error ? error.message : "Jev request failed";
+  return new JevError(message, NETWORK_FAILURE);
+}
+
 // core/hash.ts
 var HASH_SEED = 5381;
 var HASH_SHIFT = 5;
@@ -294,22 +428,15 @@ function postKey(context) {
   return `${context.kind}|${context.media}|${context.mediaLabel}|${context.text}`;
 }
 
-// extension/api.ts
-var scope = globalThis;
-var extensionApi = scope.browser ?? scope.chrome;
-function onLocalChange(field, listener) {
-  extensionApi.storage.onChanged.addListener((changes, area) => {
-    if (area !== "local" || !(field in changes))
-      return;
-    listener(changes[field].newValue);
-  });
-}
-
 // extension/storage.ts
 var API_KEY_FIELD = "apiKey";
 var TRAINING_FIELD = "trainingExamples";
 var HIDE_FIELD = "hide";
 var SKIP_MEDIA_FIELD = "skipMedia";
+var ACCESS_FIELD = "access";
+function isPlan(value) {
+  return value === "trial" || value === "sub" || value === "none";
+}
 async function readApiKey() {
   const stored = await extensionApi.storage.local.get(API_KEY_FIELD);
   const value = stored[API_KEY_FIELD];
@@ -317,6 +444,20 @@ async function readApiKey() {
 }
 async function writeApiKey(apiKey) {
   await extensionApi.storage.local.set({ [API_KEY_FIELD]: apiKey });
+}
+async function readAccess() {
+  const stored = await extensionApi.storage.sync.get(ACCESS_FIELD);
+  const value = stored[ACCESS_FIELD];
+  if (typeof value !== "object" || value === null)
+    return null;
+  const candidate = value;
+  if (typeof candidate.token !== "string" || !isPlan(candidate.plan) || typeof candidate.until !== "number") {
+    return null;
+  }
+  return { token: candidate.token, plan: candidate.plan, until: candidate.until, renews: candidate.renews !== false };
+}
+async function writeAccess(access) {
+  await extensionApi.storage.sync.set({ [ACCESS_FIELD]: access });
 }
 async function readTraining() {
   const stored = await extensionApi.storage.local.get(TRAINING_FIELD);
@@ -364,10 +505,170 @@ function onSkipMediaChange(listener) {
   onLocalChange(SKIP_MEDIA_FIELD, (value) => listener(value === true));
 }
 
+// extension/entitlement.ts
+var WORKER_URL = "https://chamuy0-api.t-su.workers.dev";
+var SESSION_URL = `${WORKER_URL}/session`;
+var CLASSIFY_URL = `${WORKER_URL}/classify`;
+var SUBSCRIBE_URL = `${WORKER_URL}/subscribe`;
+var CANCEL_URL = `${WORKER_URL}/cancel`;
+var PLANS_URL = `${WORKER_URL}/plans`;
+var SESSION_TIMEOUT_MS = 1e4;
+var HTTP_UNAUTHORIZED = 401;
+var HTTP_PAYMENT_REQUIRED = 402;
+var HTTP_BAD_GATEWAY = 502;
+var HEX_RADIX = 16;
+function isPlanActive(access, now) {
+  if (!access || access.plan === "none")
+    return false;
+  return access.until > now;
+}
+async function startPlan() {
+  return storeReply(await postSession(await deviceFingerprint()));
+}
+async function currentPlan() {
+  const access = await readAccess();
+  if (!access)
+    return startPlan();
+  try {
+    return storeReply(await getSession(access.token));
+  } catch (error) {
+    if (error instanceof JevError && error.status === HTTP_UNAUTHORIZED)
+      return startPlan();
+    return access;
+  }
+}
+async function askPlan(questions, state) {
+  const access = await readAccess();
+  if (!isPlanActive(access, Date.now()) || !access)
+    throw new JevError("No plan", HTTP_PAYMENT_REQUIRED);
+  return askJev(questions, state, { apiKey: access.token, baseUrl: CLASSIFY_URL });
+}
+async function readPlans() {
+  const response = await fetch(PLANS_URL, { signal: AbortSignal.timeout(SESSION_TIMEOUT_MS) });
+  if (!response.ok)
+    throw await requestError(response, "Plans request failed");
+  const payload = await response.json();
+  if (!Array.isArray(payload.plans))
+    throw new JevError("Malformed plans reply", HTTP_BAD_GATEWAY);
+  return payload.plans.filter(isPublicPlan);
+}
+async function requestSubscribe(plan) {
+  const payload = await postAuthorized(SUBSCRIBE_URL, { plan });
+  if (typeof payload.url !== "string" || !payload.url)
+    throw new JevError("Malformed subscribe reply", HTTP_BAD_GATEWAY);
+  return payload.url;
+}
+async function cancelPlan() {
+  await postAuthorized(CANCEL_URL, {});
+}
+async function postAuthorized(url, body) {
+  const access = await readAccess();
+  if (!access)
+    throw new JevError("No install token", HTTP_UNAUTHORIZED);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { authorization: `Bearer ${access.token}`, "content-type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(SESSION_TIMEOUT_MS)
+  });
+  if (!response.ok)
+    throw await requestError(response, "Request failed");
+  return response.json();
+}
+var ERROR_TEXT = {
+  "no-subscription": "No subscription to cancel.",
+  "unknown-plan": "That plan is not available.",
+  "unknown-token": "This install is not recognized. Close and reopen the popup.",
+  "no-token": "This install is not recognized. Close and reopen the popup.",
+  "no-access": "Free trial ended. Subscribe or add your own key.",
+  quota: "Daily limit reached. Try again tomorrow.",
+  "too-many-sessions": "Too many trials from this network today.",
+  "mercado-pago": "Mercado Pago did not accept the request. Try again."
+};
+async function requestError(response, fallback) {
+  const code = errorField2(await response.text());
+  const known = ERROR_TEXT[code];
+  const message = known ? known : `${fallback}: ${response.status}`;
+  return new JevError(message, response.status);
+}
+function errorField2(detail) {
+  try {
+    const payload = JSON.parse(detail);
+    return typeof payload.error === "string" ? payload.error : "";
+  } catch {
+    return "";
+  }
+}
+function isPublicPlan(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  const plan = value;
+  return typeof plan.id === "string" && typeof plan.amount === "number" && typeof plan.usd === "number" && typeof plan.currency === "string" && typeof plan.period === "string";
+}
+async function postSession(fingerprint) {
+  const response = await fetch(SESSION_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ fingerprint }),
+    signal: AbortSignal.timeout(SESSION_TIMEOUT_MS)
+  });
+  return readReply(response);
+}
+async function getSession(token) {
+  const response = await fetch(SESSION_URL, {
+    method: "GET",
+    headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(SESSION_TIMEOUT_MS)
+  });
+  return readReply(response);
+}
+async function readReply(response) {
+  if (!response.ok)
+    throw await requestError(response, "Session request failed");
+  return parseReply(await response.json());
+}
+function parseReply(payload) {
+  const candidate = payload;
+  if (!candidate || typeof candidate.token !== "string" || typeof candidate.until !== "number" || !isPlan(candidate.plan)) {
+    throw new JevError("Malformed session reply", HTTP_BAD_GATEWAY);
+  }
+  return {
+    token: candidate.token,
+    plan: candidate.plan,
+    until: candidate.until,
+    renews: candidate.renews !== false
+  };
+}
+async function storeReply(reply) {
+  const access = { token: reply.token, plan: reply.plan, until: reply.until, renews: reply.renews };
+  await writeAccess(access);
+  return access;
+}
+async function deviceFingerprint() {
+  const memory = navigator.deviceMemory;
+  const source = [
+    navigator.platform,
+    navigator.userAgent.replace(/[\d.]+/g, ""),
+    navigator.language,
+    new Intl.DateTimeFormat().resolvedOptions().timeZone,
+    String(navigator.hardwareConcurrency),
+    String(memory ?? "")
+  ].join("|");
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(source));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(HEX_RADIX).padStart(2, "0")).join("");
+}
+
 // extension/popup.ts
 var EXCERPT_LIMIT = 140;
 var SHOWN_LIMIT = 4;
 var SCORE_DECIMALS = 1;
+var MS_PER_HOUR = 1000 * 60 * 60;
+var POLL_MS = 2 * 1000;
+var POLL_ATTEMPTS = 60;
+var CONFIRM_MS = 7 * 1000;
+var CANCEL_LABEL = "Cancel subscription";
+var CONFIRM_LABEL = "Confirm cancellation";
+var cancelArmed = false;
 var keyInput = mustFind("#api-key");
 var keyForm = mustFind("#key-form");
 var keyStatus = mustFind("#key-status");
@@ -378,14 +679,31 @@ var hideThreshold = mustFind("#hide-threshold");
 var hideValue = mustFind("#hide-value");
 var hideStatus = mustFind("#hide-status");
 var skipMedia = mustFind("#skip-media");
+var planStatus = mustFind("#plan-status");
+var planDetail = mustFind("#plan-detail");
+var planSubscribe = mustFind("#plan-subscribe");
+var planSubscribeYear = mustFind("#plan-subscribe-year");
+var planManage = mustFind("#plan-manage");
+var planNote = mustFind("#plan-note");
+var planError = mustFind("#plan-error");
 async function start() {
   keyInput.value = await readApiKey();
   renderHide(await readHide());
   skipMedia.checked = await readSkipMedia();
   await renderTraining();
+  await renderPlan();
   keyForm.addEventListener("submit", (event) => {
     event.preventDefault();
     saveKey();
+  });
+  planSubscribe.addEventListener("click", () => {
+    startCheckout("monthly");
+  });
+  planSubscribeYear.addEventListener("click", () => {
+    startCheckout("yearly");
+  });
+  planManage.addEventListener("click", () => {
+    cancelSubscription();
   });
   skipMedia.addEventListener("change", () => {
     writeSkipMedia(skipMedia.checked);
@@ -399,6 +717,114 @@ async function start() {
   hideThreshold.addEventListener("change", () => {
     saveHide();
   });
+}
+async function renderPlan(reportError = true) {
+  const reply = await readPlanReply();
+  if (!reply.ok) {
+    if (reportError)
+      showPlanError(reply.error);
+    return false;
+  }
+  applyPlan(reply.state);
+  return isPlanActive(reply.state, Date.now());
+}
+async function readPlanReply() {
+  try {
+    return await extensionApi.runtime.sendMessage({ type: "access" });
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+function applyPlan(state) {
+  const usingPlan = state.source === "plan";
+  const canSubscribe = state.source !== "key" && (state.plan !== "sub" || !state.renews);
+  const monthly = state.plans.find((plan) => plan.period === "month");
+  const yearly = state.plans.find((plan) => plan.period === "year");
+  planStatus.textContent = statusText(state);
+  planDetail.textContent = detailText(state);
+  planSubscribe.hidden = !canSubscribe || !monthly;
+  planSubscribeYear.hidden = !canSubscribe || !yearly;
+  if (monthly)
+    planSubscribe.textContent = `Subscribe ${planLabel(monthly)}`;
+  if (yearly)
+    planSubscribeYear.textContent = `or ${planLabel(yearly)}`;
+  planManage.hidden = !(usingPlan && state.plan === "sub" && state.renews);
+  planNote.hidden = state.source !== "none";
+  planError.hidden = true;
+}
+function planLabel(plan) {
+  return `$${plan.usd}/${plan.period}`;
+}
+function statusText(state) {
+  if (state.source === "key")
+    return "Using your own key";
+  if (state.plan === "sub" && !state.renews)
+    return "Cancelled";
+  if (state.plan === "sub")
+    return "Subscribed";
+  if (state.plan === "trial")
+    return "Free trial";
+  return "No plan";
+}
+function detailText(state) {
+  if (state.source === "key")
+    return "Free forever. No plan needed.";
+  if (state.plan === "sub" && !state.renews)
+    return `Access until ${formatDate(state.until)}.`;
+  if (state.plan === "sub")
+    return `Renews ${formatDate(state.until)}.`;
+  if (state.plan === "trial")
+    return `${hoursLeft(state.until)} left. Using our key, nothing to set up.`;
+  return "Your trial ended.";
+}
+function hoursLeft(until) {
+  const hours = Math.max(1, Math.ceil((until - Date.now()) / MS_PER_HOUR));
+  return hours === 1 ? "1 hour" : `${hours} hours`;
+}
+function formatDate(until) {
+  return new Date(until).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+}
+async function startCheckout(plan) {
+  const reply = await extensionApi.runtime.sendMessage({ type: "subscribe", plan });
+  if (!reply.ok) {
+    showPlanError(reply.error);
+    return;
+  }
+  await extensionApi.tabs.create({ url: reply.url });
+  pollPlan();
+}
+async function cancelSubscription() {
+  if (!cancelArmed) {
+    cancelArmed = true;
+    planManage.textContent = CONFIRM_LABEL;
+    window.setTimeout(() => {
+      cancelArmed = false;
+      planManage.textContent = CANCEL_LABEL;
+    }, CONFIRM_MS);
+    return;
+  }
+  cancelArmed = false;
+  planManage.textContent = CANCEL_LABEL;
+  const reply = await extensionApi.runtime.sendMessage({ type: "cancel" });
+  if (!reply.ok) {
+    showPlanError(reply.error);
+    return;
+  }
+  await renderPlan();
+}
+function pollPlan() {
+  let attempts = 0;
+  const timer = window.setInterval(() => {
+    attempts += 1;
+    renderPlan(false).then((active) => {
+      if (active || attempts >= POLL_ATTEMPTS)
+        window.clearInterval(timer);
+    });
+  }, POLL_MS);
+}
+function showPlanError(message) {
+  planError.textContent = message;
+  planError.hidden = false;
 }
 async function saveKey() {
   const apiKey = keyInput.value.trim();

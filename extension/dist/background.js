@@ -342,13 +342,13 @@ class JevError extends Error {
   }
 }
 async function askJev(questions, state, options) {
-  const resolved = { apiKey: options.apiKey, model: options.model ?? DEFAULT_MODEL };
+  const resolved = { apiKey: options.apiKey, model: options.model ?? DEFAULT_MODEL, baseUrl: options.baseUrl ?? BASE_URL };
   async function attempt(retriesLeft) {
     try {
       return await postOnce(questions, state, resolved);
     } catch (error) {
       const failure = toJevError(error);
-      if (retriesLeft === 0 || !isRetryable(failure.status))
+      if (retriesLeft === 0 || !isRetryable(failure))
         throw failure;
       await pause(failure.retryAfterMs, MAX_RETRIES - retriesLeft);
       return attempt(retriesLeft - 1);
@@ -357,7 +357,7 @@ async function askJev(questions, state, options) {
   return attempt(MAX_RETRIES);
 }
 async function postOnce(questions, state, options) {
-  const response = await fetch(BASE_URL, {
+  const response = await fetch(options.baseUrl, {
     method: "POST",
     headers: {
       authorization: `Bearer ${options.apiKey}`,
@@ -386,14 +386,25 @@ function readResponse(payload) {
 }
 async function responseFailure(response) {
   const detail = await response.text();
-  const excerpt2 = detail.slice(0, ERROR_EXCERPT_LENGTH);
-  return new JevError(`Jev responded ${response.status}: ${excerpt2}`, response.status, readRetryAfterMs(response));
+  if (response.status === HTTP_RATE_LIMIT && errorField(detail) === "quota") {
+    return new JevError("quota", response.status, readRetryAfterMs(response));
+  }
+  const excerpt = detail.slice(0, ERROR_EXCERPT_LENGTH);
+  return new JevError(`Jev responded ${response.status}: ${excerpt}`, response.status, readRetryAfterMs(response));
+}
+function errorField(detail) {
+  try {
+    const payload = JSON.parse(detail);
+    return typeof payload.error === "string" ? payload.error : "";
+  } catch {
+    return "";
+  }
 }
 function readRetryAfterMs(response) {
   const milliseconds = response.headers.get("retry-after-ms");
   if (milliseconds) {
-    const parsed2 = Number(milliseconds);
-    return Number.isFinite(parsed2) && parsed2 > 0 ? parsed2 : 0;
+    const parsed = Number(milliseconds);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
   }
   const seconds = response.headers.get("retry-after");
   if (!seconds)
@@ -409,11 +420,16 @@ async function pause(retryAfterMs, attemptNumber) {
     setTimeout(resolve, waitMs);
   });
 }
-function isRetryable(status) {
-  if (status === NETWORK_FAILURE || status === HTTP_REQUEST_TIMEOUT || status === HTTP_RATE_LIMIT) {
+function isRetryable(failure) {
+  if (isQuota(failure))
+    return false;
+  if (failure.status === NETWORK_FAILURE || failure.status === HTTP_REQUEST_TIMEOUT || failure.status === HTTP_RATE_LIMIT) {
     return true;
   }
-  return status >= HTTP_SERVER_ERROR_FLOOR;
+  return failure.status >= HTTP_SERVER_ERROR_FLOOR;
+}
+function isQuota(failure) {
+  return failure.status === HTTP_RATE_LIMIT && failure.message === "quota";
 }
 function toJevError(error) {
   if (error instanceof JevError)
@@ -460,6 +476,10 @@ var API_KEY_FIELD = "apiKey";
 var TRAINING_FIELD = "trainingExamples";
 var HIDE_FIELD = "hide";
 var SKIP_MEDIA_FIELD = "skipMedia";
+var ACCESS_FIELD = "access";
+function isPlan(value) {
+  return value === "trial" || value === "sub" || value === "none";
+}
 async function readApiKey() {
   const stored = await extensionApi.storage.local.get(API_KEY_FIELD);
   const value = stored[API_KEY_FIELD];
@@ -467,6 +487,20 @@ async function readApiKey() {
 }
 async function writeApiKey(apiKey) {
   await extensionApi.storage.local.set({ [API_KEY_FIELD]: apiKey });
+}
+async function readAccess() {
+  const stored = await extensionApi.storage.sync.get(ACCESS_FIELD);
+  const value = stored[ACCESS_FIELD];
+  if (typeof value !== "object" || value === null)
+    return null;
+  const candidate = value;
+  if (typeof candidate.token !== "string" || !isPlan(candidate.plan) || typeof candidate.until !== "number") {
+    return null;
+  }
+  return { token: candidate.token, plan: candidate.plan, until: candidate.until, renews: candidate.renews !== false };
+}
+async function writeAccess(access) {
+  await extensionApi.storage.sync.set({ [ACCESS_FIELD]: access });
 }
 async function readTraining() {
   const stored = await extensionApi.storage.local.get(TRAINING_FIELD);
@@ -514,7 +548,163 @@ function onSkipMediaChange(listener) {
   onLocalChange(SKIP_MEDIA_FIELD, (value) => listener(value === true));
 }
 
+// extension/entitlement.ts
+var WORKER_URL = "https://chamuy0-api.t-su.workers.dev";
+var SESSION_URL = `${WORKER_URL}/session`;
+var CLASSIFY_URL = `${WORKER_URL}/classify`;
+var SUBSCRIBE_URL = `${WORKER_URL}/subscribe`;
+var CANCEL_URL = `${WORKER_URL}/cancel`;
+var PLANS_URL = `${WORKER_URL}/plans`;
+var SESSION_TIMEOUT_MS = 1e4;
+var HTTP_UNAUTHORIZED = 401;
+var HTTP_PAYMENT_REQUIRED = 402;
+var HTTP_BAD_GATEWAY = 502;
+var HEX_RADIX = 16;
+function isPlanActive(access, now) {
+  if (!access || access.plan === "none")
+    return false;
+  return access.until > now;
+}
+async function startPlan() {
+  return storeReply(await postSession(await deviceFingerprint()));
+}
+async function currentPlan() {
+  const access = await readAccess();
+  if (!access)
+    return startPlan();
+  try {
+    return storeReply(await getSession(access.token));
+  } catch (error) {
+    if (error instanceof JevError && error.status === HTTP_UNAUTHORIZED)
+      return startPlan();
+    return access;
+  }
+}
+async function askPlan(questions, state) {
+  const access = await readAccess();
+  if (!isPlanActive(access, Date.now()) || !access)
+    throw new JevError("No plan", HTTP_PAYMENT_REQUIRED);
+  return askJev(questions, state, { apiKey: access.token, baseUrl: CLASSIFY_URL });
+}
+async function readPlans() {
+  const response = await fetch(PLANS_URL, { signal: AbortSignal.timeout(SESSION_TIMEOUT_MS) });
+  if (!response.ok)
+    throw await requestError(response, "Plans request failed");
+  const payload = await response.json();
+  if (!Array.isArray(payload.plans))
+    throw new JevError("Malformed plans reply", HTTP_BAD_GATEWAY);
+  return payload.plans.filter(isPublicPlan);
+}
+async function requestSubscribe(plan) {
+  const payload = await postAuthorized(SUBSCRIBE_URL, { plan });
+  if (typeof payload.url !== "string" || !payload.url)
+    throw new JevError("Malformed subscribe reply", HTTP_BAD_GATEWAY);
+  return payload.url;
+}
+async function cancelPlan() {
+  await postAuthorized(CANCEL_URL, {});
+}
+async function postAuthorized(url, body) {
+  const access = await readAccess();
+  if (!access)
+    throw new JevError("No install token", HTTP_UNAUTHORIZED);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { authorization: `Bearer ${access.token}`, "content-type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(SESSION_TIMEOUT_MS)
+  });
+  if (!response.ok)
+    throw await requestError(response, "Request failed");
+  return response.json();
+}
+var ERROR_TEXT = {
+  "no-subscription": "No subscription to cancel.",
+  "unknown-plan": "That plan is not available.",
+  "unknown-token": "This install is not recognized. Close and reopen the popup.",
+  "no-token": "This install is not recognized. Close and reopen the popup.",
+  "no-access": "Free trial ended. Subscribe or add your own key.",
+  quota: "Daily limit reached. Try again tomorrow.",
+  "too-many-sessions": "Too many trials from this network today.",
+  "mercado-pago": "Mercado Pago did not accept the request. Try again."
+};
+async function requestError(response, fallback) {
+  const code = errorField2(await response.text());
+  const known = ERROR_TEXT[code];
+  const message = known ? known : `${fallback}: ${response.status}`;
+  return new JevError(message, response.status);
+}
+function errorField2(detail) {
+  try {
+    const payload = JSON.parse(detail);
+    return typeof payload.error === "string" ? payload.error : "";
+  } catch {
+    return "";
+  }
+}
+function isPublicPlan(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  const plan = value;
+  return typeof plan.id === "string" && typeof plan.amount === "number" && typeof plan.usd === "number" && typeof plan.currency === "string" && typeof plan.period === "string";
+}
+async function postSession(fingerprint) {
+  const response = await fetch(SESSION_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ fingerprint }),
+    signal: AbortSignal.timeout(SESSION_TIMEOUT_MS)
+  });
+  return readReply(response);
+}
+async function getSession(token) {
+  const response = await fetch(SESSION_URL, {
+    method: "GET",
+    headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(SESSION_TIMEOUT_MS)
+  });
+  return readReply(response);
+}
+async function readReply(response) {
+  if (!response.ok)
+    throw await requestError(response, "Session request failed");
+  return parseReply(await response.json());
+}
+function parseReply(payload) {
+  const candidate = payload;
+  if (!candidate || typeof candidate.token !== "string" || typeof candidate.until !== "number" || !isPlan(candidate.plan)) {
+    throw new JevError("Malformed session reply", HTTP_BAD_GATEWAY);
+  }
+  return {
+    token: candidate.token,
+    plan: candidate.plan,
+    until: candidate.until,
+    renews: candidate.renews !== false
+  };
+}
+async function storeReply(reply) {
+  const access = { token: reply.token, plan: reply.plan, until: reply.until, renews: reply.renews };
+  await writeAccess(access);
+  return access;
+}
+async function deviceFingerprint() {
+  const memory = navigator.deviceMemory;
+  const source = [
+    navigator.platform,
+    navigator.userAgent.replace(/[\d.]+/g, ""),
+    navigator.language,
+    new Intl.DateTimeFormat().resolvedOptions().timeZone,
+    String(navigator.hardwareConcurrency),
+    String(memory ?? "")
+  ].join("|");
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(source));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(HEX_RADIX).padStart(2, "0")).join("");
+}
+
 // extension/background.ts
+var HTTP_UNAUTHORIZED2 = 401;
+var HTTP_PAYMENT_REQUIRED2 = 402;
+var HTTP_TOO_MANY_REQUESTS = 429;
 extensionApi.runtime.onMessage.addListener((raw, _sender, sendResponse) => {
   respond(raw, sendResponse);
   return true;
@@ -536,6 +726,12 @@ async function route(message) {
       return classify(message.context);
     case "label":
       return label(message);
+    case "access":
+      return access();
+    case "subscribe":
+      return subscribe(message.plan);
+    case "cancel":
+      return cancel();
     default:
       extensionApi.runtime.openOptionsPage();
       return { ok: true };
@@ -546,16 +742,32 @@ function readMessage(raw) {
     throw new Error("Malformed extension message");
   }
   const candidate = raw;
-  if (candidate.type === "classify")
-    return { type: "classify", context: readContext(candidate.context) };
-  if (candidate.type === "label") {
-    if (!isVerdict(candidate.label))
-      throw new Error("Unknown training label");
-    return { type: "label", context: readContext(candidate.context), label: candidate.label };
+  switch (candidate.type) {
+    case "classify":
+      return { type: "classify", context: readContext(candidate.context) };
+    case "label":
+      return readLabel(candidate);
+    case "openOptions":
+      return { type: "openOptions" };
+    case "access":
+      return { type: "access" };
+    case "subscribe":
+      return readSubscribe(candidate);
+    case "cancel":
+      return { type: "cancel" };
+    default:
+      throw new Error(`Unknown message type: ${String(candidate.type)}`);
   }
-  if (candidate.type === "openOptions")
-    return { type: "openOptions" };
-  throw new Error(`Unknown message type: ${String(candidate.type)}`);
+}
+function readLabel(candidate) {
+  if (!isVerdict(candidate.label))
+    throw new Error("Unknown training label");
+  return { type: "label", context: readContext(candidate.context), label: candidate.label };
+}
+function readSubscribe(candidate) {
+  if (typeof candidate.plan !== "string")
+    throw new Error("Unknown plan");
+  return { type: "subscribe", plan: candidate.plan };
 }
 function readContext(value) {
   const context = parsePostContext(value);
@@ -564,12 +776,14 @@ function readContext(value) {
   return context;
 }
 async function classify(context) {
-  const apiKey = await readApiKey();
-  if (!apiKey)
-    return { ok: false, code: "no-key", error: "TypeSafe API key not set" };
+  const pool = await readTraining();
   try {
-    const pool = await readTraining();
-    const response = await askJev(buildQuestions(), buildState(context, pool), { apiKey });
+    const source = await pickSource();
+    if (source.kind === "none")
+      return noAccessReply();
+    const questions = buildQuestions();
+    const state = buildState(context, pool);
+    const response = source.kind === "plan" ? await askPlan(questions, state) : await askJev(questions, state, { apiKey: source.apiKey });
     return {
       ok: true,
       verdict: toVerdict(response.answers),
@@ -577,8 +791,70 @@ async function classify(context) {
       trainedOn: pool.length
     };
   } catch (error) {
-    return { ok: false, code: "request", error: messageOf(error) };
+    return failureReply(error);
   }
+}
+async function pickSource() {
+  const access = await readAccess();
+  if (isPlanActive(access, Date.now()))
+    return { kind: "plan" };
+  const apiKey = await readApiKey();
+  if (apiKey)
+    return { kind: "key", apiKey };
+  const plan = await currentPlan();
+  return isPlanActive(plan, Date.now()) ? { kind: "plan" } : { kind: "none" };
+}
+async function access() {
+  try {
+    const plan = await currentPlan();
+    const apiKey = await readApiKey();
+    const state = { ...plan, source: sourceOf(plan, apiKey), plans: await optionalPlans() };
+    return { ok: true, state };
+  } catch (error) {
+    return { ok: false, error: messageOf(error) };
+  }
+}
+async function optionalPlans() {
+  try {
+    return await readPlans();
+  } catch {
+    return [];
+  }
+}
+async function subscribe(plan) {
+  try {
+    return { ok: true, url: await requestSubscribe(plan) };
+  } catch (error) {
+    return { ok: false, error: messageOf(error) };
+  }
+}
+async function cancel() {
+  try {
+    await cancelPlan();
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: messageOf(error) };
+  }
+}
+function sourceOf(plan, apiKey) {
+  if (isPlanActive(plan, Date.now()))
+    return "plan";
+  return apiKey ? "key" : "none";
+}
+function failureReply(error) {
+  if (!(error instanceof JevError))
+    return { ok: false, code: "request", error: messageOf(error) };
+  if (error.status === HTTP_UNAUTHORIZED2 || error.status === HTTP_PAYMENT_REQUIRED2)
+    return noAccessReply();
+  if (error.status === HTTP_TOO_MANY_REQUESTS && error.message === "quota")
+    return quotaReply();
+  return { ok: false, code: "request", error: messageOf(error) };
+}
+function quotaReply() {
+  return { ok: false, code: "quota", error: "Daily limit reached. Try again tomorrow." };
+}
+function noAccessReply() {
+  return { ok: false, code: "no-access", error: "Free trial ended. Subscribe or add your own TypeSafe key." };
 }
 async function label(message) {
   const pool = await readTraining();

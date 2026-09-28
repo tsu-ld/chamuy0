@@ -1,4 +1,6 @@
 import type { SlopVerdict } from '../core/rubric'
+import type { PublicPlan } from './entitlement'
+import type { Plan } from './storage'
 import { isVerdict } from '../core/rubric'
 
 export interface SlopReply {
@@ -8,13 +10,30 @@ export interface SlopReply {
   trainedOn: number
 }
 
+export type FailureCode = 'no-access' | 'quota' | 'request'
+
 interface FailureReply {
   ok: false
-  code: 'no-key' | 'request'
+  code: FailureCode
   error: string
 }
 
 export type ClassifyReply = SlopReply | FailureReply
+
+export interface AccessState {
+  token: string
+  plan: Plan
+  until: number
+  renews: boolean
+  source: 'plan' | 'key' | 'none'
+  plans: PublicPlan[]
+}
+
+export type AccessReply = { ok: true, state: AccessState } | { ok: false, error: string }
+
+export type SubscribeReply = { ok: true, url: string } | { ok: false, error: string }
+
+export type CancelReply = { ok: true } | { ok: false, error: string }
 
 export function isSlopReply(value: unknown): value is SlopReply {
   if (typeof value !== 'object' || value === null) return false

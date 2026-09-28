@@ -3,7 +3,7 @@ import antfu from '@antfu/eslint-config'
 
 export default antfu({
   stylistic: false,
-  ignores: ['extension/dist/**', 'fixtures/**', 'training/**'],
+  ignores: ['extension/dist/**', 'fixtures/**', 'training/**', 'demo/**'],
   rules: {
     'max-depth': ['error', 2],
     'max-params': ['error', 3],

@@ -99,15 +99,15 @@
             <li>
               <span class="step-num" aria-hidden="true">01</span>
               <div>
-                <strong>Install and paste your key.</strong>
-                <p>Load the extension, open settings, paste a TypeSafe API key. It stays in your browser profile.</p>
+                <strong>Install. The free trial starts on its own.</strong>
+                <p>A 1-day trial scores posts with no setup. After it, subscribe in pesos through Mercado Pago or paste your own TypeSafe API key, which stays in your browser profile.</p>
               </div>
             </li>
             <li>
               <span class="step-num" aria-hidden="true">02</span>
               <div>
                 <strong>Scroll your feed. Each post gets a score.</strong>
-                <p>The text of the post goes to api.typesafe.ai to be scored. Nothing else does.</p>
+                <p>The text of the post goes to api.typesafe.ai to be scored, through our proxy while you are on the trial or a subscription. Nothing else does.</p>
               </div>
             </li>
             <li>
@@ -186,14 +186,14 @@
       <!-- ============================= cost ============================= -->
       <section class="section" id="cost">
         <div class="wrap">
-          <h2>You bring the key. Here is what it costs.</h2>
-          <p class="measure">Scoring runs on Jev, TypeSafe's decision model, currently in early access. You get your own key from the TypeSafe console. chamuy0 has no account, no subscription, and no server of ours to pay for.</p>
+          <h2>Free for a day, then $2 a month or your own key.</h2>
+          <p class="measure">A 1-day free trial starts on install. After it you can subscribe in pesos (ARS 3.000/month or ARS 15.000/year) through Mercado Pago, no account, or bring your own TypeSafe key and pay TypeSafe directly. Either way, chamuy0 has no account.</p>
           <div class="receipt" role="table" aria-label="Cost breakdown">
             <div role="row"><span class="receipt-val" role="cell">$0.042</span><span role="cell">per million input tokens</span></div>
             <div role="row"><span class="receipt-val" role="cell">~230</span><span role="cell">tokens per post</span></div>
             <div role="row"><span class="receipt-val" role="cell">~$0.01</span><span role="cell">per thousand posts</span></div>
           </div>
-          <p class="small-print">Jev is in early access. If you cannot get a key yet, the extension installs and sits inert until you have one. Long posts cost more than short ones.</p>
+          <p class="small-print">The token cost is what TypeSafe charges your own key. On the trial or a subscription you pay ARS 3.000/month or ARS 15.000/year and nothing per post. Jev is in early access, and long posts cost more than short ones.</p>
         </div>
       </section>
 
@@ -208,11 +208,11 @@
             </div>
             <div>
               <h3>Leaves your device:</h3>
-              <p>The text of the post being scored, sent to api.typesafe.ai with your key. Up to six recent labeled examples ride along as reference.</p>
+              <p>The text of the post being scored, sent to api.typesafe.ai. Up to six recent labeled examples ride along as reference. With your own key it goes straight there; on the trial or a subscription it passes through our proxy first.</p>
             </div>
             <div>
               <h3>Never happens:</h3>
-              <p>No account. No analytics. No telemetry. No ads. No server of ours. Nothing posted, commented, or reacted to on your behalf.</p>
+              <p>No account. No analytics. No telemetry. No ads. Nothing posted, commented, or reacted to on your behalf. The proxy keeps only a hashed device fingerprint and a truncated network address, to stop trial restarts, and never stores post text.</p>
             </div>
           </div>
           <p class="caption"><a href="https://github.com/tsu-ld/chamuy0/blob/main/PRIVACY.md">Privacy policy</a></p>
@@ -233,10 +233,10 @@
                   <li><a href="https://github.com/tsu-ld/chamuy0/releases/latest">Download the latest release</a>.</li>
                   <li>Open <code>about:debugging#/runtime/this-firefox</code>.</li>
                   <li>Load Temporary Add-on… and pick the zip.</li>
-                  <li>The setup page opens by itself. Paste your key, Save.</li>
+                  <li>The setup page opens by itself. The trial is already running.</li>
                   <li>Open linkedin.com.</li>
                 </ol>
-                <p class="small-print">Firefox drops temporary add-ons when it closes. Repeat steps 2 and 3. You never paste the key twice.</p>
+                <p class="small-print">Firefox drops temporary add-ons when it closes. Repeat steps 2 and 3. The trial does not restart.</p>
               </div>
               <div class="install-col">
                 <h3>Chrome, Edge, Brave</h3>
@@ -244,7 +244,7 @@
                   <li>Download and unzip the release.</li>
                   <li>Open <code>chrome://extensions</code> and turn on Developer mode.</li>
                   <li>Load unpacked, pick the folder.</li>
-                  <li>Click the extension icon and paste your key.</li>
+                  <li>Click the extension icon. The trial is already running.</li>
                 </ol>
               </div>
             </div>
@@ -265,19 +265,19 @@
           <div class="faq">
             <div class="faq-item">
               <h3>Does it send my LinkedIn data anywhere?</h3>
-              <p>Only the text of the post being scored, to api.typesafe.ai. Your key and labels stay in your browser profile.</p>
+              <p>Only the text of the post being scored, to api.typesafe.ai, through our proxy on the trial or a subscription. Your key and labels stay in your browser profile.</p>
             </div>
             <div class="faq-item">
               <h3>What model scores the posts?</h3>
               <p>Jev, a decision model from TypeSafe. It returns a score and signals, not text. It cannot write or hallucinate a post.</p>
             </div>
             <div class="faq-item">
-              <h3>Why do I need my own API key?</h3>
-              <p>So there is no server of ours to run, pay for, or trust with your data. The key is yours and it never reaches us.</p>
+              <h3>Do I need my own API key?</h3>
+              <p>No. A free 1-day trial starts on install, and a peso subscription keeps it running without a key. Your own key is the free-forever path: it goes straight from your browser to TypeSafe and never reaches us.</p>
             </div>
             <div class="faq-item">
               <h3>What does it cost to run?</h3>
-              <p>About $0.042 per million input tokens. Roughly a cent per thousand posts. A full day of scrolling is a fraction of a cent.</p>
+              <p>With your own key, about $0.042 per million input tokens, roughly a cent per thousand posts. On the trial or a subscription, ARS 3.000/month or ARS 15.000/year and nothing per post.</p>
             </div>
             <div class="faq-item">
               <h3>Will it hide posts I wanted?</h3>
